@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import CreateJobForm from "./components/CreateJobForm";
-import ApproveJob from "./components/ApproveJob";
-import ReleaseFunds from "./components/ReleaseFunds";
+import CreateJobForm from "./components/CreateJobForm.jsx";
+import ApproveJob from "./components/ApproveJob.jsx";
+import ReleaseFunds from "./components/ReleaseFunds.jsx";
 import { Container, Row, Col, Alert, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 

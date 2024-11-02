@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getFreelanceEscrowContract } from "../utils/FreelanceEscrow";
+import { getFreelanceEscrowContract } from "../utils/FreelanceEscrow.js";
 import { Button, Form, Alert } from "react-bootstrap";
 
 function ReleaseFunds() {
