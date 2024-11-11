@@ -11,10 +11,18 @@ function App() {
     const connectWallet = async () => {
       if (window.ethereum) {
         try {
+          // Request account access if needed
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+          console.log("Connected account:", accounts[0]);
           setAccount(accounts[0]);
+
+          // Listen for account changes
+          window.ethereum.on("accountsChanged", (accounts) => {
+            setAccount(accounts[0] || null);
+          });
         } catch (error) {
-          console.error("User denied account access");
+          console.error("User denied account access or an error occurred.");
+          alert("Error connecting to MetaMask.");
         }
       } else {
         alert("MetaMask is not installed. Please install it to use this app.");
@@ -22,15 +30,6 @@ function App() {
     };
 
     connectWallet();
-  }, []);
-
-  // Handle MetaMask account changes
-  useEffect(() => {
-    if (window.ethereum) {
-      window.ethereum.on("accountsChanged", (accounts) => {
-        setAccount(accounts[0] || null);
-      });
-    }
   }, []);
 
   return (
@@ -51,7 +50,7 @@ function App() {
       {/* Row for Components */}
       <Row className="justify-content-center">
         <Col md={6}>
-          <CreateJobForm />
+          <CreateJobForm account={account} />
         </Col>
       </Row>
     </Container>
