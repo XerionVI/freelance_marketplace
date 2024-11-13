@@ -69,10 +69,6 @@ const FreelanceEscrowABI = [
 		"type": "event"
 	  },
 	  {
-		"stateMutability": "payable",
-		"type": "fallback"
-	  },
-	  {
 		"inputs": [
 		  {
 			"internalType": "uint256",
@@ -115,6 +111,53 @@ const FreelanceEscrowABI = [
 		  }
 		],
 		"stateMutability": "payable",
+		"type": "function"
+	  },
+	  {
+		"inputs": [
+		  {
+			"internalType": "uint256",
+			"name": "jobId",
+			"type": "uint256"
+		  }
+		],
+		"name": "getJobDetails",
+		"outputs": [
+		  {
+			"internalType": "address",
+			"name": "client",
+			"type": "address"
+		  },
+		  {
+			"internalType": "address",
+			"name": "freelancer",
+			"type": "address"
+		  },
+		  {
+			"internalType": "uint256",
+			"name": "amount",
+			"type": "uint256"
+		  },
+		  {
+			"internalType": "enum FreelanceEscrow.JobStatus",
+			"name": "status",
+			"type": "uint8"
+		  }
+		],
+		"stateMutability": "view",
+		"type": "function"
+	  },
+	  {
+		"inputs": [],
+		"name": "getTotalJobs",
+		"outputs": [
+		  {
+			"internalType": "uint256",
+			"name": "",
+			"type": "uint256"
+		  }
+		],
+		"stateMutability": "view",
 		"type": "function"
 	  },
 	  {
@@ -163,12 +206,7 @@ const FreelanceEscrowABI = [
 		],
 		"stateMutability": "view",
 		"type": "function"
-	  },
-	  {
-		"stateMutability": "payable",
-		"type": "receive"
 	  }
-	// (Include the rest of your ABI array here)
   ];
   
   export default FreelanceEscrowABI;
