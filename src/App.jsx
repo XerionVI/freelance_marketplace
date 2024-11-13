@@ -5,6 +5,12 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "./utils/getFreelanceEscrow"; // Add this utility to connect to your contract
 
+
+// Mental Note: 
+// Untuk Deskripsi lengkap pekerjaan dapat dilakukan pada server external
+// Dengan cara membuat inputan job Desc yang terhubung dengan server external
+// Kemudian user dapat mengecek deskripsi pekerjaan dengan mengklik tombol memasukan job ID yang diinginkan
+
 function App() {
   const [account, setAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
