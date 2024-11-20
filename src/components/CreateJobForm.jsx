@@ -8,28 +8,41 @@ function CreateJobForm({ account, onJobCreated }) {
   const [deposit, setDeposit] = useState("");
   const [message, setMessage] = useState("");
 
-  // Function to create a new job
   const handleCreateJob = async () => {
     const contract = await getFreelanceEscrowContract(account);
     if (!contract) return;
 
     try {
-      console.log("Creating job with contract:", contract);
-
-      // Send the transaction
       const tx = await contract.createJob(freelancerAddress, {
-        value: ethers.parseEther(deposit), // Convert ETH amount to Wei
+        value: ethers.parseEther(deposit),
       });
-      console.log("Transaction sent:", tx);
 
-      // Wait for transaction confirmation
       const receipt = await tx.wait();
-      console.log("Transaction confirmed:", receipt);
 
-      // Emit event and call onJobCreated to refresh job list
-      onJobCreated(); // This will trigger the parent component to fetch the jobs list
+      const eventFilter = contract.filters.JobCreated();
+      const events = await contract.queryFilter(
+        eventFilter,
+        receipt.blockNumber,
+        receipt.blockNumber
+      );
 
-      // setMessage(`Job created successfully! Job ID: ${receipt.events[0].args.jobId.toNumber()}`);
+      if (events.length > 0) {
+        const { jobId, client, freelancer, amount } = events[0].args;
+
+        onJobCreated({
+          jobId: Number(jobId),
+          client,
+          freelancer,
+          amount: ethers.formatEther(amount),
+          blockNumber: events[0].blockNumber,
+          transactionHash: events[0].transactionHash,
+        });
+
+        setMessage(`Job created successfully! Job ID: ${Number(jobId)}`);
+      } else {
+        console.error("No JobCreated event found.");
+        setMessage("Job creation succeeded, but no event found.");
+      }
     } catch (error) {
       console.error("Error creating job:", error);
       setMessage("Job creation failed. Check console for details.");

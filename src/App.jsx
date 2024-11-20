@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Alert, Button, Table, Dropdown } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col, Alert, Button, Dropdown } from "react-bootstrap";
 import CreateJobForm from "./components/CreateJobForm";
-import JobList from "./components/JobList"; // Import your JobList component
-import "bootstrap/dist/css/bootstrap.min.css";
+import JobList from "./components/JobList";
 import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "./utils/getFreelanceEscrow";
 
@@ -10,9 +9,8 @@ function App() {
   const [account, setAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("All Jobs"); // Default filter to "All Jobs"
+  const [filter, setFilter] = useState("All Jobs");
 
-  // Prompt user to connect MetaMask on load
   useEffect(() => {
     const connectWallet = async () => {
       if (window.ethereum) {
@@ -33,7 +31,6 @@ function App() {
     connectWallet();
   }, []);
 
-  // Fetch jobs from the contract
   const fetchJobs = async () => {
     if (!account) return;
     setLoading(true);
@@ -41,7 +38,6 @@ function App() {
       const contract = await getFreelanceEscrowContract(account);
       const totalJobs = await contract.getTotalJobs();
       const jobDetails = [];
-      const currentAccountAddress = account.toLowerCase();
 
       for (let i = 0; i < totalJobs; i++) {
         const job = await contract.getJobDetails(i);
@@ -51,16 +47,13 @@ function App() {
           freelancer: job.freelancer,
           amount: ethers.formatEther(job.amount),
           status: job.status === 0 ? "Created" : job.status === 1 ? "Completed" : "Approved",
+          blockNumber: 0, // Placeholder, you can fetch this if needed
+          transactionHash: "", // Placeholder
         };
 
-        if (
-          filter === "All Jobs" ||
-          currentAccountAddress === job.client.toLowerCase() ||
-          currentAccountAddress === job.freelancer.toLowerCase()
-        ) {
-          jobDetails.push(jobObj);
-        }
+        jobDetails.push(jobObj);
       }
+
       setJobs(jobDetails);
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -68,14 +61,13 @@ function App() {
     setLoading(false);
   };
 
-  // Update job list dynamically
-  const handleJobUpdated = () => {
-    fetchJobs();
+  const handleJobCreated = (newJob) => {
+    setJobs((prevJobs) => [...prevJobs, newJob]);
   };
 
   useEffect(() => {
     fetchJobs();
-  }, [account, filter]);
+  }, [account]);
 
   return (
     <Container className="mt-5">
@@ -83,43 +75,39 @@ function App() {
 
       <div className="text-center mb-4">
         {account ? (
-          <Alert variant="info">Connected as: {account}</Alert>
+          <Alert variant="info">Connected as {account}</Alert>
         ) : (
-          <Button onClick={() => window.ethereum.request({ method: "eth_requestAccounts" })}>
-            Connect MetaMask
-          </Button>
+          <Alert variant="warning">Please connect to MetaMask.</Alert>
         )}
       </div>
 
-      <Row className="justify-content-center">
-        <Col md={6}>
-          <CreateJobForm account={account} onJobCreated={handleJobUpdated} />
-        </Col>
-      </Row>
 
-      <Row className="justify-content-center mt-4">
-        <Col md={4}>
-          <Dropdown>
-            <Dropdown.Toggle variant="success" id="filter-dropdown">
+      <Col md={6} className="mx-auto mb-4">
+        <Row>
+          <CreateJobForm account={account} onJobCreated={handleJobCreated} />
+        </Row>
+        <Row>
+          <Dropdown onSelect={(eventKey) => setFilter(eventKey)} className="mb-3">
+            <Dropdown.Toggle variant="success" id="dropdown-basic">
               {filter}
             </Dropdown.Toggle>
+
             <Dropdown.Menu>
-              <Dropdown.Item onClick={() => setFilter("All Jobs")}>All Jobs</Dropdown.Item>
-              <Dropdown.Item onClick={() => setFilter("My Jobs")}>My Jobs</Dropdown.Item>
+              <Dropdown.Item eventKey="All Jobs">All Jobs</Dropdown.Item>
+              <Dropdown.Item eventKey="My Jobs">My Jobs</Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
-        </Col>
-      </Row>
 
-      <Row className="justify-content-center mt-4">
-        <Col md={8}>
-          {loading ? (
-            <Alert variant="info">Loading jobs...</Alert>
-          ) : (
-            <JobList jobs={jobs} account={account} onJobUpdated={handleJobUpdated} />
-          )}
-        </Col>
-      </Row>
+          <JobList
+            account={account}
+            filter={filter}
+            jobs={jobs}
+            loading={loading}
+          />
+
+        </Row>
+      </Col>
+
     </Container>
   );
 }
