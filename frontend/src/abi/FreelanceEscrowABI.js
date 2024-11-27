@@ -11,25 +11,6 @@ const FreelanceEscrowABI = [
 		  {
 			"indexed": false,
 			"internalType": "address",
-			"name": "client",
-			"type": "address"
-		  }
-		],
-		"name": "JobApproved",
-		"type": "event"
-	  },
-	  {
-		"anonymous": false,
-		"inputs": [
-		  {
-			"indexed": false,
-			"internalType": "uint256",
-			"name": "jobId",
-			"type": "uint256"
-		  },
-		  {
-			"indexed": false,
-			"internalType": "address",
 			"name": "freelancer",
 			"type": "address"
 		  }
@@ -69,17 +50,23 @@ const FreelanceEscrowABI = [
 		"type": "event"
 	  },
 	  {
+		"anonymous": false,
 		"inputs": [
 		  {
+			"indexed": false,
 			"internalType": "uint256",
 			"name": "jobId",
 			"type": "uint256"
+		  },
+		  {
+			"indexed": false,
+			"internalType": "address",
+			"name": "freelancer",
+			"type": "address"
 		  }
 		],
-		"name": "approveJob",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
+		"name": "JobSubmitted",
+		"type": "event"
 	  },
 	  {
 		"inputs": [
@@ -205,6 +192,19 @@ const FreelanceEscrowABI = [
 		  }
 		],
 		"stateMutability": "view",
+		"type": "function"
+	  },
+	  {
+		"inputs": [
+		  {
+			"internalType": "uint256",
+			"name": "jobId",
+			"type": "uint256"
+		  }
+		],
+		"name": "submitJob",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	  }
   ];

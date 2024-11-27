@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
-import AddressDetails from "./AddressDetails"; // Re-import AddressDetails
+import AddressDetails from "./AddressDetails";
 
 function JobList({ account, filter, jobs, loading }) {
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null); // Store selected address
+  const [selectedFilter, setSelectedFilter] = useState("All Jobs");
+  const [processingJobId, setProcessingJobId] = useState(null); // Track the job being processed
 
-  // Apply filter whenever jobs or filter changes
+  // Apply filter whenever jobs, filter, or account changes
   useEffect(() => {
-    if (filter === "All Jobs") {
+    if (selectedFilter === "All Jobs") {
       setFilteredJobs(jobs);
     } else {
-      const currentAccountAddress = account.toLowerCase();
+      const currentAccountAddress = account?.toLowerCase();
       setFilteredJobs(
         jobs.filter(
           (job) =>
@@ -21,11 +23,41 @@ function JobList({ account, filter, jobs, loading }) {
         )
       );
     }
-  }, [jobs, filter, account]);
+  }, [jobs, selectedFilter, account]);
 
   // Handle address click to show the address details
   const handleAddressClick = (address) => {
     setSelectedAddress(address);
+  };
+
+  // Handle actions for each job (Submit, Complete)
+  const handleJobAction = async (jobId, action) => {
+    try {
+      setProcessingJobId(jobId); // Set the job as processing
+      const contract = await getFreelanceEscrowContract(account);
+
+      let tx;
+      if (action === "submit") {
+        tx = await contract.submitJob(jobId);
+      } else if (action === "complete") {
+        tx = await contract.completeJob(jobId);
+      } else {
+        console.error("Invalid action or missing jobId");
+        return;
+      }
+
+      // Wait for the transaction to be mined
+      const receipt = await tx.wait();
+      console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
+
+      // Optionally refresh the jobs list or update state
+      alert(`Job ${jobId} ${action} action completed successfully!`);
+    } catch (error) {
+      console.error("Error processing job action:", error);
+      alert(`Failed to perform ${action} on Job ${jobId}.`);
+    } finally {
+      setProcessingJobId(null); // Reset processing state
+    }
   };
 
   if (loading) {
@@ -56,7 +88,7 @@ function JobList({ account, filter, jobs, loading }) {
                 <button
                   type="button"
                   className="btn btn-link p-0 text-decoration-underline"
-                  onClick={() => handleAddressClick(job.client)} // Handle client address click
+                  onClick={() => handleAddressClick(job.client)}
                   style={{
                     color: "blue",
                     cursor: "pointer",
@@ -71,7 +103,7 @@ function JobList({ account, filter, jobs, loading }) {
                 <button
                   type="button"
                   className="btn btn-link p-0 text-decoration-underline"
-                  onClick={() => handleAddressClick(job.freelancer)} // Handle freelancer address click
+                  onClick={() => handleAddressClick(job.freelancer)}
                   style={{
                     color: "blue",
                     cursor: "pointer",
@@ -95,13 +127,31 @@ function JobList({ account, filter, jobs, loading }) {
                 </a>
               </td>
               <td>
-                {/* Action buttons can go here */}
+                {job.status === "Approved" &&
+                  job.freelancer.toLowerCase() === account.toLowerCase() && (
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => handleJobAction(job.jobId, "submit")}
+                      disabled={processingJobId === job.jobId}
+                    >
+                      {processingJobId === job.jobId ? "Processing..." : "Submit"}
+                    </button>
+                  )}
+                {job.status === "Submitted" &&
+                  job.client.toLowerCase() === account.toLowerCase() && (
+                    <button
+                      className="btn btn-success btn-sm me-2"
+                      onClick={() => handleJobAction(job.jobId, "complete")}
+                      disabled={processingJobId === job.jobId}
+                    >
+                      {processingJobId === job.jobId ? "Processing..." : "Complete"}
+                    </button>
+                  )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
       {selectedAddress && (
         <AddressDetails
           address={selectedAddress}

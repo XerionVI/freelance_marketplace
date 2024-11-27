@@ -81,29 +81,29 @@ function App() {
         )}
       </div>
 
-
+      
       <Col md={6} className="mx-auto mb-4">
         <Row>
           <CreateJobForm account={account} onJobCreated={handleJobCreated} />
         </Row>
         <Row>
-          <Dropdown onSelect={(eventKey) => setFilter(eventKey)} className="mb-3">
-            <Dropdown.Toggle variant="success" id="dropdown-basic">
-              {filter}
-            </Dropdown.Toggle>
+        <Dropdown onSelect={(eventKey) => setFilter(eventKey)} className="mb-3">
+      <Dropdown.Toggle variant="success" id="dropdown-basic">
+        {filter}
+      </Dropdown.Toggle>
 
-            <Dropdown.Menu>
-              <Dropdown.Item eventKey="All Jobs">All Jobs</Dropdown.Item>
-              <Dropdown.Item eventKey="My Jobs">My Jobs</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+      <Dropdown.Menu>
+        <Dropdown.Item eventKey="All Jobs">All Jobs</Dropdown.Item>
+        <Dropdown.Item eventKey="My Jobs">My Jobs</Dropdown.Item>
+      </Dropdown.Menu>
+    </Dropdown>
 
-          <JobList
-            account={account}
-            filter={filter}
-            jobs={jobs}
-            loading={loading}
-          />
+    <JobList
+      account={account}
+      filter={filter}
+      jobs={jobs}
+      loading={loading}
+    />
 
         </Row>
       </Col>
