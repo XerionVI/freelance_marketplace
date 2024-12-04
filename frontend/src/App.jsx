@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Alert, Button, Dropdown } from "react-bootstrap";
+import { Container, Row, Col, Alert, Tab, Tabs } from "react-bootstrap";
 import CreateJobForm from "./components/CreateJobForm";
 import JobList from "./components/JobList";
+import JobListDB from "./components/JobListDB";
 import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "./utils/getFreelanceEscrow";
 
@@ -81,33 +82,29 @@ function App() {
         )}
       </div>
 
-      
-      <Col md={6} className="mx-auto mb-4">
-        <Row>
-          <CreateJobForm account={account} onJobCreated={handleJobCreated} />
-        </Row>
-        <Row>
-        <Dropdown onSelect={(eventKey) => setFilter(eventKey)} className="mb-3">
-      <Dropdown.Toggle variant="success" id="dropdown-basic">
-        {filter}
-      </Dropdown.Toggle>
+      <Tabs defaultActiveKey="displayJobs" id="freelance-tabs" className="mb-4">
+        {/* Tab for Creating Job */}
+        <Tab eventKey="createJob" title="Create Job">
+          <Row>
+            <Col md={8} className="mx-auto">
+              <CreateJobForm account={account} onJobCreated={handleJobCreated} />
+            </Col>
+          </Row>
+        </Tab>
 
-      <Dropdown.Menu>
-        <Dropdown.Item eventKey="All Jobs">All Jobs</Dropdown.Item>
-        <Dropdown.Item eventKey="My Jobs">My Jobs</Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
+        {/* Tab for Displaying Jobs */}
+        <Tab eventKey="displayJobs" title="Display Jobs">
+          <Row>
+            <Col md={8} className="mx-auto">
+              <h3>Jobs on Smart Contract</h3>
+              <JobList account={account} filter={filter} jobs={jobs} loading={loading} />
 
-    <JobList
-      account={account}
-      filter={filter}
-      jobs={jobs}
-      loading={loading}
-    />
-
-        </Row>
-      </Col>
-
+              <h3 className="mt-4">Jobs in the Database</h3>
+              <JobListDB account={account} filter={filter} />
+            </Col>
+          </Row>
+        </Tab>
+      </Tabs>
     </Container>
   );
 }

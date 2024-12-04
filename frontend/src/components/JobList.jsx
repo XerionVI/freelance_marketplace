@@ -5,24 +5,23 @@ import AddressDetails from "./AddressDetails";
 
 function JobList({ account, filter, jobs, loading }) {
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null); // Store selected address
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState("All Jobs");
-  const [processingJobId, setProcessingJobId] = useState(null); // Track the job being processed
+  const [processingJobId, setProcessingJobId] = useState(null);
 
   // Apply filter whenever jobs, filter, or account changes
   useEffect(() => {
-    if (selectedFilter === "All Jobs") {
-      setFilteredJobs(jobs);
-    } else {
-      const currentAccountAddress = account?.toLowerCase();
-      setFilteredJobs(
-        jobs.filter(
+    const currentAccountAddress = account?.toLowerCase();
+
+    const filtered = selectedFilter === "All Jobs"
+      ? jobs
+      : jobs.filter(
           (job) =>
             currentAccountAddress === job.client.toLowerCase() ||
             currentAccountAddress === job.freelancer.toLowerCase()
-        )
-      );
-    }
+        );
+    
+    setFilteredJobs(filtered);
   }, [jobs, selectedFilter, account]);
 
   // Handle address click to show the address details
@@ -33,7 +32,7 @@ function JobList({ account, filter, jobs, loading }) {
   // Handle actions for each job (Submit, Complete)
   const handleJobAction = async (jobId, action) => {
     try {
-      setProcessingJobId(jobId); // Set the job as processing
+      setProcessingJobId(jobId);
       const contract = await getFreelanceEscrowContract(account);
 
       let tx;
@@ -46,23 +45,18 @@ function JobList({ account, filter, jobs, loading }) {
         return;
       }
 
-      // Wait for the transaction to be mined
       const receipt = await tx.wait();
       console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
-
-      // Optionally refresh the jobs list or update state
       alert(`Job ${jobId} ${action} action completed successfully!`);
     } catch (error) {
       console.error("Error processing job action:", error);
       alert(`Failed to perform ${action} on Job ${jobId}.`);
     } finally {
-      setProcessingJobId(null); // Reset processing state
+      setProcessingJobId(null);
     }
   };
 
-  if (loading) {
-    return <p>Loading jobs...</p>;
-  }
+  if (loading) return <p>Loading jobs...</p>;
 
   return (
     <div>
@@ -75,9 +69,7 @@ function JobList({ account, filter, jobs, loading }) {
             <th>Freelancer</th>
             <th>Amount (ETH)</th>
             <th>Status</th>
-            <th>Block</th>
             <th>Transaction</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -89,12 +81,7 @@ function JobList({ account, filter, jobs, loading }) {
                   type="button"
                   className="btn btn-link p-0 text-decoration-underline"
                   onClick={() => handleAddressClick(job.client)}
-                  style={{
-                    color: "blue",
-                    cursor: "pointer",
-                    background: "none",
-                    border: "none",
-                  }}
+                  style={buttonStyle}
                 >
                   {job.client}
                 </button>
@@ -104,19 +91,13 @@ function JobList({ account, filter, jobs, loading }) {
                   type="button"
                   className="btn btn-link p-0 text-decoration-underline"
                   onClick={() => handleAddressClick(job.freelancer)}
-                  style={{
-                    color: "blue",
-                    cursor: "pointer",
-                    background: "none",
-                    border: "none",
-                  }}
+                  style={buttonStyle}
                 >
                   {job.freelancer}
                 </button>
               </td>
               <td>{job.amount}</td>
               <td>{job.status}</td>
-              <td>{job.blockNumber}</td>
               <td>
                 <a
                   href={`https://etherscan.io/tx/${job.transactionHash}`}
@@ -126,28 +107,6 @@ function JobList({ account, filter, jobs, loading }) {
                   View Tx
                 </a>
               </td>
-              <td>
-                {job.status === "Approved" &&
-                  job.freelancer.toLowerCase() === account.toLowerCase() && (
-                    <button
-                      className="btn btn-warning btn-sm me-2"
-                      onClick={() => handleJobAction(job.jobId, "submit")}
-                      disabled={processingJobId === job.jobId}
-                    >
-                      {processingJobId === job.jobId ? "Processing..." : "Submit"}
-                    </button>
-                  )}
-                {job.status === "Submitted" &&
-                  job.client.toLowerCase() === account.toLowerCase() && (
-                    <button
-                      className="btn btn-success btn-sm me-2"
-                      onClick={() => handleJobAction(job.jobId, "complete")}
-                      disabled={processingJobId === job.jobId}
-                    >
-                      {processingJobId === job.jobId ? "Processing..." : "Complete"}
-                    </button>
-                  )}
-              </td>
             </tr>
           ))}
         </tbody>
@@ -155,11 +114,19 @@ function JobList({ account, filter, jobs, loading }) {
       {selectedAddress && (
         <AddressDetails
           address={selectedAddress}
-          onClose={() => setSelectedAddress(null)} // Close the address details modal
+          onClose={() => setSelectedAddress(null)}
         />
       )}
     </div>
   );
 }
+
+// Define button styles separately for reusability
+const buttonStyle = {
+  color: "blue",
+  cursor: "pointer",
+  background: "none",
+  border: "none",
+};
 
 export default JobList;
