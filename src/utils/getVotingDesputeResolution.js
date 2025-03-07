@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import FreelanceEscrowABI from "../abi/FreelanceEscrowABI.json";
+import VotingDisputeResolutionABI from "../abi/VotingDisputeResolutionABI.json";
 
 // Replace with your deployed contract address
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";  // Example address
+const CONTRACT_ADDRESS = "0xYourVotingDisputeResolutionContractAddress";  // Example address
 
-export function getFreelanceEscrowContract(providerType = 'metamask') {
+export function getVotingDisputeResolutionContract(providerType = 'metamask') {
   let provider;
 
   switch (providerType) {
@@ -22,5 +22,5 @@ export function getFreelanceEscrowContract(providerType = 'metamask') {
   }
 
   const signer = provider.getSigner();
-  return new ethers.Contract(CONTRACT_ADDRESS, FreelanceEscrowABI.abi, signer);
+  return new ethers.Contract(CONTRACT_ADDRESS, VotingDisputeResolutionABI.abi, signer);
 }
