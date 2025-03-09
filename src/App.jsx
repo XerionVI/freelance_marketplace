@@ -3,7 +3,7 @@ import CreateJobForm from "./components/CreateJobForm";
 import DisputeList from "./components/DisputeList";
 import { Container, Row, Col, Alert, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getVotingDisputeResolutionContract } from "./utils/getVotingDisputeResolution";
+import { getVotingDisputeResolutionContract } from "./utils/getVotingDesputeResolution";
 import { getFreelanceEscrowContract } from "./utils/getFreelanceEscrow";
 
 function App() {

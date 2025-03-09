@@ -1,20 +1,34 @@
-import React, { useState } from "react";
-import { ethers } from "ethers";
+import React, { useState, useEffect } from "react";
+import { ethers, parseEther } from "ethers"; // Updated import
 import { Button, Form, Alert } from "react-bootstrap";
 import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
 
-function CreateJobForm() {
+function CreateJobForm({ account }) {
   const [freelancerAddress, setFreelancerAddress] = useState("");
   const [deposit, setDeposit] = useState("");
   const [message, setMessage] = useState("");
+  const [freelanceEscrow, setFreelanceEscrow] = useState(null);
+
+  useEffect(() => {
+    const loadContract = async () => {
+      const contract = await getFreelanceEscrowContract(); // Await here
+      setFreelanceEscrow(contract);
+    };
+  
+    loadContract();
+  }, []);
+  
 
   const handleCreateJob = async () => {
-    const contract = getFreelanceEscrowContract();
-    if (!contract) return;
+    if (!freelanceEscrow) {
+      setMessage("FreelanceEscrow contract is not loaded.");
+      return;
+    }
 
     try {
-      const tx = await contract.createJob(freelancerAddress, {
-        value: ethers.utils.parseEther(deposit),
+      const tx = await freelanceEscrow.createJob(freelancerAddress, {
+        value: parseEther(deposit), // Fixed here for Ethers.js v6
+        from: account,
       });
       await tx.wait();
       setMessage("Job created and funds deposited successfully!");

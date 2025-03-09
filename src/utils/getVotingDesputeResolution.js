@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import VotingDisputeResolutionABI from "../abi/VotingDisputeResolutionABI.json";
 
 // Replace with your deployed contract address
-const CONTRACT_ADDRESS = "0xYourVotingDisputeResolutionContractAddress";  // Example address
+const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";  // Example address
 
 export function getVotingDisputeResolutionContract(providerType = 'metamask') {
   let provider;
