@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import CreateJobForm from "./components/CreateJobForm";
 import DisputeList from "./components/DisputeList";
+import JobList from "./components/JobList";
 import { Container, Row, Col, Alert, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getVotingDisputeResolutionContract } from "./utils/getVotingDesputeResolution";
+import { getVotingDisputeResolutionContract } from "./utils/getVotingDisputeResolution";
 import { getFreelanceEscrowContract } from "./utils/getFreelanceEscrow";
 
 function App() {
@@ -80,7 +81,14 @@ function App() {
       {/* Row for Components */}
       <Row className="justify-content-center">
         <Col md={6}>
-          <CreateJobForm freelanceEscrow={freelanceEscrow} account={account} />
+          <CreateJobForm account={account} />
+        </Col>
+      </Row>
+
+      {/* Row for Job List */}
+      <Row className="justify-content-center mt-4">
+        <Col md={8}>
+          <JobList account={account} />
         </Col>
       </Row>
 
