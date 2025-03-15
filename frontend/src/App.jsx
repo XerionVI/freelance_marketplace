@@ -32,14 +32,14 @@ function App() {
     connectWallet();
   }, []);
 
-  const fetchJobs = async () => {
+    const fetchJobs = async () => {
     if (!account) return;
     setLoading(true);
     try {
       const contract = await getFreelanceEscrowContract(account);
       const totalJobs = await contract.getTotalJobs();
       const jobDetails = [];
-
+  
       for (let i = 0; i < totalJobs; i++) {
         const job = await contract.getJobDetails(i);
         const jobObj = {
@@ -51,10 +51,10 @@ function App() {
           blockNumber: 0, // Placeholder, you can fetch this if needed
           transactionHash: "", // Placeholder
         };
-
+  
         jobDetails.push(jobObj);
       }
-
+  
       setJobs(jobDetails);
     } catch (error) {
       console.error("Error fetching jobs:", error);

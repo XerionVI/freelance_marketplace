@@ -18,13 +18,12 @@ function CreateJobForm({ account, onJobCreated }) {
         });
 
         const receipt = await tx.wait();
+        console.log("Transaction receipt:", receipt);
 
         const eventFilter = contract.filters.JobCreated();
-        const events = await contract.queryFilter(
-            eventFilter,
-            receipt.blockNumber,
-            receipt.blockNumber
-        );
+        const events = await contract.queryFilter(eventFilter, receipt.blockNumber, "latest");
+
+        console.log("Events found:", events);
 
         if (events.length > 0) {
             const { jobId, client, freelancer, amount } = events[0].args;
@@ -62,7 +61,7 @@ function CreateJobForm({ account, onJobCreated }) {
         console.error("Error creating job:", error);
         setMessage("Job creation failed. Check console for details.");
     }
-};
+  };
 
   return (
     <div>

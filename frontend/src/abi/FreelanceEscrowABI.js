@@ -1,5 +1,54 @@
 const FreelanceEscrowABI = [
 	{
+		"inputs": [
+		  {
+			"internalType": "address",
+			"name": "_disputeResolutionAddress",
+			"type": "address"
+		  }
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	  },
+	  {
+		"anonymous": false,
+		"inputs": [
+		  {
+			"indexed": false,
+			"internalType": "uint256",
+			"name": "jobId",
+			"type": "uint256"
+		  },
+		  {
+			"indexed": false,
+			"internalType": "uint256",
+			"name": "disputeId",
+			"type": "uint256"
+		  }
+		],
+		"name": "DisputeInitiated",
+		"type": "event"
+	  },
+	  {
+		"anonymous": false,
+		"inputs": [
+		  {
+			"indexed": false,
+			"internalType": "uint256",
+			"name": "jobId",
+			"type": "uint256"
+		  },
+		  {
+			"indexed": false,
+			"internalType": "address",
+			"name": "client",
+			"type": "address"
+		  }
+		],
+		"name": "JobApproved",
+		"type": "event"
+	  },
+	  {
 		"anonymous": false,
 		"inputs": [
 		  {
@@ -50,23 +99,17 @@ const FreelanceEscrowABI = [
 		"type": "event"
 	  },
 	  {
-		"anonymous": false,
 		"inputs": [
 		  {
-			"indexed": false,
 			"internalType": "uint256",
 			"name": "jobId",
 			"type": "uint256"
-		  },
-		  {
-			"indexed": false,
-			"internalType": "address",
-			"name": "freelancer",
-			"type": "address"
 		  }
 		],
-		"name": "JobSubmitted",
-		"type": "event"
+		"name": "approveJob",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	  },
 	  {
 		"inputs": [
@@ -98,6 +141,19 @@ const FreelanceEscrowABI = [
 		  }
 		],
 		"stateMutability": "payable",
+		"type": "function"
+	  },
+	  {
+		"inputs": [],
+		"name": "disputeResolution",
+		"outputs": [
+		  {
+			"internalType": "contract VotingDisputeResolution",
+			"name": "",
+			"type": "address"
+		  }
+		],
+		"stateMutability": "view",
 		"type": "function"
 	  },
 	  {
@@ -148,6 +204,24 @@ const FreelanceEscrowABI = [
 		"type": "function"
 	  },
 	  {
+		"inputs": [
+		  {
+			"internalType": "uint256",
+			"name": "_jobId",
+			"type": "uint256"
+		  },
+		  {
+			"internalType": "string",
+			"name": "_description",
+			"type": "string"
+		  }
+		],
+		"name": "initiateDispute",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	  },
+	  {
 		"inputs": [],
 		"name": "jobCount",
 		"outputs": [
@@ -192,19 +266,6 @@ const FreelanceEscrowABI = [
 		  }
 		],
 		"stateMutability": "view",
-		"type": "function"
-	  },
-	  {
-		"inputs": [
-		  {
-			"internalType": "uint256",
-			"name": "jobId",
-			"type": "uint256"
-		  }
-		],
-		"name": "submitJob",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	  }
   ];
