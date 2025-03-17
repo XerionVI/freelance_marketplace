@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Table, Button } from "react-bootstrap";
 import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
 import AddressDetails from "./AddressDetails";
@@ -59,9 +60,9 @@ function JobList({ account, filter, jobs, loading }) {
   if (loading) return <p>Loading jobs...</p>;
 
   return (
-    <div>
+    <div className="table-responsive">
       <h5>Job List</h5>
-      <table className="table">
+      <Table striped bordered hover>
         <thead>
           <tr>
             <th>Job ID</th>
@@ -77,24 +78,22 @@ function JobList({ account, filter, jobs, loading }) {
             <tr key={job.jobId}>
               <td>{job.jobId}</td>
               <td>
-                <button
-                  type="button"
-                  className="btn btn-link p-0 text-decoration-underline"
+                <Button
+                  variant="link"
+                  className="p-0 text-decoration-underline"
                   onClick={() => handleAddressClick(job.client)}
-                  style={buttonStyle}
                 >
                   {job.client}
-                </button>
+                </Button>
               </td>
               <td>
-                <button
-                  type="button"
-                  className="btn btn-link p-0 text-decoration-underline"
+                <Button
+                  variant="link"
+                  className="p-0 text-decoration-underline"
                   onClick={() => handleAddressClick(job.freelancer)}
-                  style={buttonStyle}
                 >
                   {job.freelancer}
-                </button>
+                </Button>
               </td>
               <td>{job.amount}</td>
               <td>{job.status}</td>
@@ -110,7 +109,7 @@ function JobList({ account, filter, jobs, loading }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
       {selectedAddress && (
         <AddressDetails
           address={selectedAddress}
@@ -120,13 +119,5 @@ function JobList({ account, filter, jobs, loading }) {
     </div>
   );
 }
-
-// Define button styles separately for reusability
-const buttonStyle = {
-  color: "blue",
-  cursor: "pointer",
-  background: "none",
-  border: "none",
-};
 
 export default JobList;

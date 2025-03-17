@@ -1,3 +1,4 @@
+// filepath: d:\Project TA\freelance_marketplace\frontend\src\components\CreateJobForm.jsx
 import React, { useState } from "react";
 import { ethers } from "ethers";
 import { Button, Form, Alert } from "react-bootstrap";
@@ -13,53 +14,54 @@ function CreateJobForm({ account, onJobCreated }) {
     if (!contract) return;
 
     try {
-        const tx = await contract.createJob(freelancerAddress, {
-            value: ethers.parseEther(deposit),
+      const tx = await contract.createJob(freelancerAddress, {
+        value: ethers.parseEther(deposit),
+      });
+
+      const receipt = await tx.wait();
+      console.log("Transaction receipt:", receipt);
+
+      const eventFilter = contract.filters.JobCreated();
+      const events = await contract.queryFilter(eventFilter, receipt.blockNumber, "latest");
+
+      console.log("Events found:", events);
+
+      if (events.length > 0) {
+        const { jobId, client, freelancer, amount } = events[0].args;
+
+        const jobData = {
+          client,
+          freelancer,
+          amount: ethers.formatEther(amount),
+          blockNumber: events[0].blockNumber,
+          transactionHash: events[0].transactionHash,
+        };
+
+        // Save the job to the database
+        const response = await fetch("/api/jobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jobData),
         });
 
-        const receipt = await tx.wait();
-        console.log("Transaction receipt:", receipt);
-
-        const eventFilter = contract.filters.JobCreated();
-        const events = await contract.queryFilter(eventFilter, receipt.blockNumber, "latest");
-
-        console.log("Events found:", events);
-
-        if (events.length > 0) {
-            const { jobId, client, freelancer, amount } = events[0].args;
-
-            const jobData = {
-                jobId: Number(jobId),
-                client,
-                freelancer,
-                amount: ethers.formatEther(amount),
-                blockNumber: events[0].blockNumber,
-                transactionHash: events[0].transactionHash,
-            };
-
-            // Save the job to the database
-            const response = await fetch("/api/jobs", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(jobData),
-            });
-
-            if (response.ok) {
-                console.log("Job saved to database.");
-                setMessage(`Job created and saved! Job ID: ${jobId}`);
-            } else {
-                console.error("Error saving job to database.");
-                setMessage("Job created but failed to save to database.");
-            }
-
-            onJobCreated(jobData);
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log("Job saved to database with jobId:", responseData.jobId);
+          setMessage(`Job created and saved! Job ID: ${responseData.jobId}`);
+          jobData.jobId = responseData.jobId;
         } else {
-            console.error("No JobCreated event found.");
-            setMessage("Job creation succeeded, but no event found.");
+          console.error("Error saving job to database.");
+          setMessage("Job created but failed to save to database.");
         }
+
+        onJobCreated(jobData);
+      } else {
+        console.error("No JobCreated event found.");
+        setMessage("Job creation succeeded, but no event found.");
+      }
     } catch (error) {
-        console.error("Error creating job:", error);
-        setMessage("Job creation failed. Check console for details.");
+      console.error("Error creating job:", error);
+      setMessage("Job creation failed. Check console for details.");
     }
   };
 

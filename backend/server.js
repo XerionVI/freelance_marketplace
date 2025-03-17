@@ -1,13 +1,16 @@
+// filepath: d:\Project TA\freelance_marketplace\backend\server.js
 require("dotenv").config();
 
 const express = require("express");
 const mysql = require("mysql");
 const path = require("path");
 const multer = require("multer");
+const cors = require("cors");
 
 const app = express();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
@@ -41,82 +44,13 @@ db.connect((err) => {
   console.log("Connected to MySQL database.");
 });
 
-// API route to fetch jobs
-app.get("/api/jobs", (req, res) => {
-  const query = `SELECT * FROM jobs`;
+// Import authentication routes
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
 
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error("Error fetching jobs:", err);
-      res.status(500).send("Error fetching job data.");
-    } else {
-      res.status(200).json(results);
-    }
-  });
-});
-
-// API route to add a job
-app.post("/api/jobs", (req, res) => {
-  const { jobId, client, freelancer, amount, blockNumber, transactionHash } = req.body;
-
-  const query = `INSERT INTO jobs (jobId, client, freelancer, amount, blockNumber, transactionHash) VALUES (?, ?, ?, ?, ?, ?)`;
-
-  db.query(query, [jobId, client, freelancer, amount, blockNumber, transactionHash], (err) => {
-    if (err) {
-      console.error("Error inserting job:", err);
-      res.status(500).send("Error saving job data.");
-    } else {
-      res.status(201).send("Job data saved successfully.");
-    }
-  });
-});
-
-// API route for adding job details with file upload
-app.post("/api/job-details", (req, res) => {
-  const { jobId, jobTitle, description, status } = req.body;
-
-  // Check if jobId exists in jobs table
-  const jobCheckQuery = "SELECT id FROM jobs WHERE id = ?";
-  db.query(jobCheckQuery, [jobId], (err, results) => {
-    if (err) {
-      console.error("Error checking job ID:", err);
-      return res.status(500).send("Error checking job ID.");
-    }
-
-    if (results.length === 0) {
-      return res.status(400).send("Invalid jobId: Job does not exist.");
-    }
-
-    // Check if jobId already has a record in job_details
-    const detailsCheckQuery = "SELECT jobId FROM job_details WHERE jobId = ?";
-    db.query(detailsCheckQuery, [jobId], (err, results) => {
-      if (err) {
-        console.error("Error checking job details:", err);
-        return res.status(500).send("Error checking job details.");
-      }
-
-      if (results.length > 0) {
-        return res.status(400).send("Job details already exist for this jobId.");
-      }
-
-      // Insert into job_details
-      const insertQuery = `
-        INSERT INTO job_details (jobId, jobTitle, description, status, filePath)
-        VALUES (?, ?, ?, ?, NULL)
-      `;
-      db.query(insertQuery, [jobId, jobTitle, description, status], (err) => {
-        if (err) {
-          console.error("Error inserting job details:", err);
-          return res.status(500).send("Error saving job details.");
-        }
-
-        res.status(201).send("Job details saved successfully.");
-      });
-    });
-  });
-});
-
-
+// Import job routes
+const jobRoutes = require("./routes/jobs");
+app.use("/api/jobs", jobRoutes);
 
 // Serve React frontend for other routes (this must come last)
 app.get("*", (req, res) => {

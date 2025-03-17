@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import VotingDisputeResolutionABI from "../abi/VotingDisputeResolutionABI.json";
+import VotingDisputeResolutionABI from "../abi/VotingDisputeResolutionABI";  // Ensure correct path
 
 // Replace with your deployed contract address
 const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";  // Example address

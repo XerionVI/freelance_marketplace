@@ -41,7 +41,7 @@ function JobListDB({ account, filter }) {
   }
 
   return (
-    <div>
+    <div className="table-responsive">
       <Table striped bordered hover>
         <thead>
           <tr>
