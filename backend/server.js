@@ -1,4 +1,3 @@
-// filepath: d:\Project TA\freelance_marketplace\backend\server.js
 require("dotenv").config();
 
 const express = require("express");

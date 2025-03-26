@@ -1,4 +1,3 @@
-// filepath: d:\Project TA\freelance_marketplace\frontend\src\components\CreateJobForm.jsx
 import React, { useState } from "react";
 import { ethers } from "ethers";
 import { Button, Form, Alert } from "react-bootstrap";
@@ -37,10 +36,21 @@ function CreateJobForm({ account, onJobCreated }) {
           transactionHash: events[0].transactionHash,
         };
 
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("No token found in localStorage");
+          setMessage("Failed to save job: User is not authenticated.");
+          return;
+        }
+
         // Save the job to the database
         const response = await fetch("/api/jobs", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+          },
           body: JSON.stringify(jobData),
         });
 

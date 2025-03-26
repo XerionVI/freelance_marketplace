@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import axios from "axios";
-import AddJobDetailsForm from "./AddJobDetailsForm";
 
-function JobListDB({ account, filter }) {
+function JobListClient({ account }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState(null);
 
   // Fetch jobs from the API
   const fetchJobs = async () => {
@@ -24,7 +21,10 @@ function JobListDB({ account, filter }) {
         headers: { Authorization: `Bearer ${token}` }, // Include the token in the Authorization header
       });
       console.log("Jobs fetched from backend:", response.data); // Debugging log
-      setJobs(response.data);
+
+      // Filter jobs to include only those where the logged-in user is the client
+      const clientJobs = response.data.filter((job) => job.client === account);
+      setJobs(clientJobs);
     } catch (error) {
       console.error("Error fetching jobs from database:", error);
     } finally {
@@ -32,27 +32,17 @@ function JobListDB({ account, filter }) {
     }
   };
 
-  const handleAddDetails = (jobId) => {
-    setSelectedJobId(jobId);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedJobId(null);
-  };
-
   // Fetch jobs when the component mounts
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [account]);
 
   if (loading) {
     return <p>Loading jobs...</p>;
   }
 
   if (jobs.length === 0) {
-    return <p>No jobs found.</p>; // Handle empty job list
+    return <p>No jobs found for this client.</p>; // Handle empty job list
   }
 
   return (
@@ -67,7 +57,6 @@ function JobListDB({ account, filter }) {
             <th>Amount</th>
             <th>Block Number</th>
             <th>Transaction Hash</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -80,30 +69,12 @@ function JobListDB({ account, filter }) {
               <td>{job.amount}</td>
               <td>{job.blockNumber}</td>
               <td>{job.transactionHash}</td>
-              <td>
-                <Button
-                  variant="info"
-                  onClick={() => handleAddDetails(job.id || job.jobId)}
-                >
-                  Add Details
-                </Button>
-              </td>
             </tr>
           ))}
         </tbody>
       </Table>
-
-      {/* Modal for AddJobDetailsForm */}
-      <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Job Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <AddJobDetailsForm jobId={selectedJobId} />
-        </Modal.Body>
-      </Modal>
     </div>
   );
 }
 
-export default JobListDB;
+export default JobListClient;

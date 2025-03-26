@@ -1,4 +1,3 @@
-// filepath: d:\Project TA\freelance_marketplace\backend\controllers\authController.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
@@ -79,28 +78,31 @@ exports.login = async (req, res) => {
     // Check if user exists
     db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
       if (results.length === 0) {
-        return res.status(400).json({ msg: "Invalid credentials" });
+        return res.status(400).json({ msg: "Invalid email" });
       }
 
       const user = results[0];
 
+      // Log passwords for debugging
+      console.log("Plain-text password:", password);
+      console.log("Hashed password from DB:", user.password);
+
       // Check password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ msg: "Invalid credentials" });
+        return res.status(400).json({ msg: "Invalid password" });
       }
 
-      // Generate JWT
       const payload = {
         user: {
           id: user.id,
         },
       };
-
+      
       jwt.sign(
         payload,
         process.env.JWT_SECRET,
-        { expiresIn: "1h" },
+        { expiresIn: "1h" }, // Token expires in 1 hour
         (err, token) => {
           if (err) throw err;
           res.json({ token });
@@ -111,4 +113,21 @@ exports.login = async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server error");
   }
+};
+
+exports.getMe = (req, res) => {
+  const userId = req.user.id;
+
+  db.query("SELECT username FROM users WHERE id = ?", [userId], (err, results) => {
+    if (err) {
+      console.error("Error fetching user details:", err);
+      return res.status(500).send("Server error");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    res.json({ username: results[0].username });
+  });
 };

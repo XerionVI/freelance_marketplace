@@ -1,12 +1,10 @@
-// filepath: d:\Project TA\freelance_marketplace\frontend\src\App.jsx
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Alert, Tab, Tabs } from "react-bootstrap";
+import { Container, Row, Col, Alert, Tab, Tabs, Button } from "react-bootstrap";
 import CreateJobForm from "./components/CreateJobForm";
 import JobList from "./components/JobList";
 import JobListDB from "./components/JobListDB";
+import JobListClient from "./components/JobListClient"; // Import JobListClient
 import AuthForm from "./components/AuthForm";
-import { ethers } from "ethers";
-import { getFreelanceEscrowContract } from "./utils/getFreelanceEscrow";
 import axios from "axios";
 
 function App() {
@@ -14,7 +12,8 @@ function App() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All Jobs");
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(localStorage.getItem("token")); // Load token from localStorage
+  const [username, setUsername] = useState(null);
 
   useEffect(() => {
     const connectWallet = async () => {
@@ -41,7 +40,7 @@ function App() {
     setLoading(true);
     try {
       const response = await axios.get("/api/jobs", {
-        headers: { Authorization: token },
+        headers: { Authorization: `Bearer ${token}` }, // Use the token in the Authorization header
       });
       setJobs(response.data);
     } catch (error) {
@@ -50,16 +49,42 @@ function App() {
     setLoading(false);
   };
 
-  const handleJobCreated = (newJob) => {
-    setJobs((prevJobs) => [...prevJobs, newJob]);
+  const fetchUsername = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsername(response.data.username);
+    } catch (error) {
+      console.error("Error fetching username:", error);
+      if (error.response && error.response.status === 401) {
+        handleLogout(); // Log the user out if the token is invalid
+      }
+    }
   };
 
   useEffect(() => {
-    fetchJobs();
+    if (token) {
+      fetchJobs();
+      fetchUsername();
+    }
   }, [account, token]);
 
   const handleAuthSuccess = (token) => {
+    localStorage.setItem("token", token); // Save the token in localStorage
     setToken(token);
+    fetchUsername();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove the token from localStorage
+    setToken(null);
+    setUsername(null);
+  };
+
+  const handleJobCreated = (newJob) => {
+    setJobs((prevJobs) => [...prevJobs, newJob]);
   };
 
   return (
@@ -68,7 +93,10 @@ function App() {
 
       <div className="text-center mb-4">
         {account ? (
-          <Alert variant="info">Connected as {account}</Alert>
+          <Alert variant="info">
+            Connected as {account}
+            {username && <div>Logged in as: <strong>{username}</strong></div>}
+          </Alert>
         ) : (
           <Alert variant="warning">Please connect to MetaMask.</Alert>
         )}
@@ -84,29 +112,42 @@ function App() {
           </Col>
         </Row>
       ) : (
-        <Tabs defaultActiveKey="displayJobs" id="freelance-tabs" className="mb-4">
-          {/* Tab for Creating Job */}
-          <Tab eventKey="createJob" title="Create Job">
-            <Row>
-              <Col md={8} className="mx-auto">
-                <CreateJobForm account={account} onJobCreated={handleJobCreated} />
-              </Col>
-            </Row>
-          </Tab>
+        <>
+          <div className="text-end mb-3">
+            <Button variant="danger" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
+          <Tabs defaultActiveKey="displayJobs" id="freelance-tabs" className="mb-4">
+            <Tab eventKey="createJob" title="Create Job">
+              <Row>
+                <Col md={8} className="mx-auto">
+                  <CreateJobForm account={account} onJobCreated={handleJobCreated} />
+                </Col>
+              </Row>
+            </Tab>
 
-          {/* Tab for Displaying Jobs */}
-          <Tab eventKey="displayJobs" title="Display Jobs">
-            <Row>
-              <Col md={12}>
-                <h3>Jobs on Smart Contract</h3>
-                <JobList account={account} filter={filter} jobs={jobs} loading={loading} />
+            <Tab eventKey="displayJobs" title="Display Jobs">
+              <Row>
+                <Col md={12}>
+                  <h3>Jobs on Smart Contract</h3>
+                  <JobList account={account} filter={filter} jobs={jobs} loading={loading} />
 
-                <h3 className="mt-4">Jobs in the Database</h3>
-                <JobListDB account={account} filter={filter} />
-              </Col>
-            </Row>
-          </Tab>
-        </Tabs>
+                  <h3 className="mt-4">Jobs in the Database</h3>
+                  <JobListDB account={account} filter={filter} />
+                </Col>
+              </Row>
+            </Tab>
+
+            <Tab eventKey="clientJobs" title="Client Jobs">
+              <Row>
+                <Col md={12}>
+                  <JobListClient account={account} /> {/* Render JobListClient */}
+                </Col>
+              </Row>
+            </Tab>
+          </Tabs>
+        </>
       )}
     </Container>
   );
