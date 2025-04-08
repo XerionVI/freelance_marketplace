@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Table, Button } from "react-bootstrap";
 import axios from "axios";
 
-function JobListClient({ account }) {
+function VoteableJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [votedJobs, setVotedJobs] = useState([]); // Track jobs the user has voted for
 
-  const fetchJobs = async () => {
+  const fetchVoteableJobs = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
     if (!token) {
@@ -16,18 +17,24 @@ function JobListClient({ account }) {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/jobs/client", {
+      const response = await axios.get("http://localhost:5000/api/jobs/voteable", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setJobs(response.data);
+
+      // Fetch jobs the user has already voted for
+      const votedResponse = await axios.get("http://localhost:5000/api/votes", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setVotedJobs(votedResponse.data.map((vote) => vote.jobId));
     } catch (error) {
-      console.error("Error fetching jobs for client from database:", error);
+      console.error("Error fetching voteable jobs:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const markAsVoteable = async (jobId) => {
+  const castVote = async (jobId, voteFor) => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No token found in localStorage");
@@ -36,27 +43,28 @@ function JobListClient({ account }) {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/jobs/mark-voteable",
-        { jobId },
+        "http://localhost:5000/api/jobs/vote",
+        { jobId, voteFor },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Job marked as voteable!");
-      fetchJobs(); // Refresh the job list
+      alert("Vote cast successfully!");
+      fetchVoteableJobs(); // Refresh the job list
     } catch (error) {
-      console.error("Error marking job as voteable:", error);
+      console.error("Error casting vote:", error);
+      alert(error.response?.data || "Error casting vote.");
     }
   };
 
   useEffect(() => {
-    fetchJobs();
-  }, [account]);
+    fetchVoteableJobs();
+  }, []);
 
   if (loading) {
-    return <p>Loading jobs...</p>;
+    return <p>Loading voteable jobs...</p>;
   }
 
   if (jobs.length === 0) {
-    return <p>No jobs found for this client.</p>;
+    return <p>No voteable jobs found.</p>;
   }
 
   return (
@@ -85,13 +93,24 @@ function JobListClient({ account }) {
               <td>{job.blockNumber}</td>
               <td>{job.transactionHash}</td>
               <td>
-                {!job.voteable && (
-                  <Button
-                    variant="warning"
-                    onClick={() => markAsVoteable(job.id || job.jobId)}
-                  >
-                    Mark as Voteable
-                  </Button>
+                {votedJobs.includes(job.id || job.jobId) ? (
+                  <span>Already Voted</span>
+                ) : (
+                  <>
+                    <Button
+                      variant="success"
+                      className="me-2"
+                      onClick={() => castVote(job.id || job.jobId, "client")}
+                    >
+                      Vote Client
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => castVote(job.id || job.jobId, "freelancer")}
+                    >
+                      Vote Freelancer
+                    </Button>
+                  </>
                 )}
               </td>
             </tr>
@@ -102,4 +121,4 @@ function JobListClient({ account }) {
   );
 }
 
-export default JobListClient;
+export default VoteableJobs;

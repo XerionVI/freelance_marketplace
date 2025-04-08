@@ -4,7 +4,9 @@ import CreateJobForm from "./components/CreateJobForm";
 import JobList from "./components/JobList";
 import JobListDB from "./components/JobListDB";
 import JobListClient from "./components/JobListClient"; // Import JobListClient
+import JobListFreelance from "./components/JobListFreelance"; // Import JobListFreelance
 import AuthForm from "./components/AuthForm";
+import VoteableJobs from "./components/VoteableJobs"; // Import VoteableJobs
 import axios from "axios";
 
 function App() {
@@ -138,7 +140,6 @@ function App() {
                 </Col>
               </Row>
             </Tab>
-
             <Tab eventKey="clientJobs" title="Client Jobs">
               <Row>
                 <Col md={12}>
@@ -146,6 +147,20 @@ function App() {
                 </Col>
               </Row>
             </Tab>
+            <Tab eventKey="freelancerJobs" title="Freelancer Jobs">
+              <Row>
+                <Col md={12}>
+                  <JobListFreelance account={account} /> {/* Render JobListFreelance */}
+                </Col>
+              </Row>
+            </Tab>
+            <Tab eventKey="voteableJobs" title="Voteable Jobs">
+            <Row>
+              <Col md={12}>
+                <VoteableJobs />
+              </Col>
+            </Row>
+          </Tab>
           </Tabs>
         </>
       )}

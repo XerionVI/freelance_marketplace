@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import axios from "axios";
 
-function JobListClient({ account }) {
+function JobListFreelance({ account }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch jobs for the logged-in freelancer from the API
   const fetchJobs = async () => {
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token"); // Retrieve the token from localStorage
     if (!token) {
       console.error("No token found in localStorage");
       setLoading(false);
@@ -16,37 +17,19 @@ function JobListClient({ account }) {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/jobs/client", {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await axios.get("http://localhost:5000/api/jobs/freelancer", {
+        headers: { Authorization: `Bearer ${token}` }, // Include the token in the Authorization header
       });
+      console.log("Jobs fetched for freelancer from backend:", response.data); // Debugging log
       setJobs(response.data);
     } catch (error) {
-      console.error("Error fetching jobs for client from database:", error);
+      console.error("Error fetching jobs for freelancer from database:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const markAsVoteable = async (jobId) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No token found in localStorage");
-      return;
-    }
-
-    try {
-      await axios.post(
-        "http://localhost:5000/api/jobs/mark-voteable",
-        { jobId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert("Job marked as voteable!");
-      fetchJobs(); // Refresh the job list
-    } catch (error) {
-      console.error("Error marking job as voteable:", error);
-    }
-  };
-
+  // Fetch jobs when the component mounts
   useEffect(() => {
     fetchJobs();
   }, [account]);
@@ -56,7 +39,7 @@ function JobListClient({ account }) {
   }
 
   if (jobs.length === 0) {
-    return <p>No jobs found for this client.</p>;
+    return <p>No jobs found for this freelancer.</p>; // Handle empty job list
   }
 
   return (
@@ -71,7 +54,6 @@ function JobListClient({ account }) {
             <th>Amount</th>
             <th>Block Number</th>
             <th>Transaction Hash</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -84,16 +66,6 @@ function JobListClient({ account }) {
               <td>{job.amount}</td>
               <td>{job.blockNumber}</td>
               <td>{job.transactionHash}</td>
-              <td>
-                {!job.voteable && (
-                  <Button
-                    variant="warning"
-                    onClick={() => markAsVoteable(job.id || job.jobId)}
-                  >
-                    Mark as Voteable
-                  </Button>
-                )}
-              </td>
             </tr>
           ))}
         </tbody>
@@ -102,4 +74,4 @@ function JobListClient({ account }) {
   );
 }
 
-export default JobListClient;
+export default JobListFreelance;
