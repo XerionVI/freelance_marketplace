@@ -176,3 +176,52 @@ exports.getUserVotes = (req, res) => {
     }
   });
 };
+exports.getJobDetails = (req, res) => {
+  const { jobId } = req.params;
+
+  // Query to fetch job details
+  const query = `SELECT * FROM job_details WHERE jobId = ?`;
+  db.query(query, [jobId], (err, results) => {
+    if (err) {
+      console.error("Error fetching job details:", err);
+      return res.status(500).send("Error fetching job details.");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("Job details not found.");
+    }
+
+    res.status(200).json(results[0]); // Return the job details
+  });
+};
+exports.updateJobDetails = (req, res) => {
+  const { jobId, jobTitle, description, status } = req.body;
+
+  // Check if jobId exists in job_details
+  const checkQuery = "SELECT jobId FROM job_details WHERE jobId = ?";
+  db.query(checkQuery, [jobId], (err, results) => {
+    if (err) {
+      console.error("Error checking job details:", err);
+      return res.status(500).send("Error checking job details.");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("Job details not found.");
+    }
+
+    // Update job details
+    const updateQuery = `
+      UPDATE job_details
+      SET jobTitle = ?, description = ?, status = ?
+      WHERE jobId = ?
+    `;
+    db.query(updateQuery, [jobTitle, description, status, jobId], (err) => {
+      if (err) {
+        console.error("Error updating job details:", err);
+        return res.status(500).send("Error updating job details.");
+      }
+
+      res.status(200).send("Job details updated successfully.");
+    });
+  });
+};

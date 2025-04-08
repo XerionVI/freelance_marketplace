@@ -13,5 +13,7 @@ router.post("/mark-voteable", authMiddleware, jobController.markJobAsVoteable);
 router.get("/voteable", authMiddleware, jobController.getVoteableJobs);
 router.post("/vote", authMiddleware, jobController.voteForJob);
 router.get("/votes", authMiddleware, jobController.getUserVotes);
+router.get("/details/:jobId", authMiddleware, jobController.getJobDetails);
+router.put("/details", authMiddleware, jobController.updateJobDetails);
 
 module.exports = router;
