@@ -82,11 +82,7 @@ exports.login = async (req, res) => {
       }
 
       const user = results[0];
-
-      // Log passwords for debugging
-      console.log("Plain-text password:", password);
-      console.log("Hashed password from DB:", user.password);
-
+      
       // Check password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {

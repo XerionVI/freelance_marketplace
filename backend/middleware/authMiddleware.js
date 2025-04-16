@@ -14,10 +14,10 @@ module.exports = function (req, res, next) {
   }
 
   const token = authHeader.split(" ")[1]; // Extract the token after "Bearer"
+  // console.log("Token received:", token); // Debugging log
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded token:", decoded); // Debugging log
     req.user = decoded.user; // Attach the user to the request object
     next();
   } catch (err) {

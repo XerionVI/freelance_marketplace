@@ -1,30 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Alert, Tab, Tabs, Button } from "react-bootstrap";
-import CreateJobForm from "./components/CreateJobForm";
-import JobList from "./components/JobList";
-import JobListDB from "./components/JobListDB";
-import JobListClient from "./components/JobListClient"; // Import JobListClient
-import JobListFreelance from "./components/JobListFreelance"; // Import JobListFreelance
-import AuthForm from "./components/AuthForm";
-import VoteableJobs from "./components/VoteableJobs"; // Import VoteableJobs
+import { Container, Row, Col, Button, Alert, Tabs, Tab } from "react-bootstrap";
 import axios from "axios";
+import AuthForm from "./components/AuthForm";
+import CreateJobForm from "./components/CreateJobForm";
+import JobListDB from "./components/JobListDB";
+import JobList from "./components/JobList";
+import JobListClient from "./components/JobListClient";
+import JobListFreelance from "./components/JobListFreelance";
+import VoteableJobs from "./components/VoteableJobs";
 
 function App() {
   const [account, setAccount] = useState(null);
-  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All Jobs");
   const [token, setToken] = useState(localStorage.getItem("token")); // Load token from localStorage
   const [username, setUsername] = useState(null);
 
   useEffect(() => {
-    const connectWallet = async () => {
+      const connectWallet = async () => {
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-          setAccount(accounts[0]);
+          setAccount(accounts[0]); // Set the first account as the connected wallet
           window.ethereum.on("accountsChanged", (accounts) => {
-            setAccount(accounts[0] || null);
+            setAccount(accounts[0] || null); // Update the account when it changes
           });
         } catch (error) {
           alert("Error connecting to MetaMask.");
@@ -37,24 +36,10 @@ function App() {
     connectWallet();
   }, []);
 
-  const fetchJobs = async () => {
-    if (!account || !token) return;
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/jobs", {
-        headers: { Authorization: `Bearer ${token}` }, // Use the token in the Authorization header
-      });
-      setJobs(response.data);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-    }
-    setLoading(false);
-  };
-
   const fetchUsername = async () => {
     if (!token) return;
     try {
-      const response = await axios.get("/api/auth/me", {
+      const response = await axios.get("http://localhost:5000/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsername(response.data.username);
@@ -68,7 +53,6 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      fetchJobs();
       fetchUsername();
     }
   }, [account, token]);
@@ -85,8 +69,10 @@ function App() {
     setUsername(null);
   };
 
-  const handleJobCreated = (newJob) => {
-    setJobs((prevJobs) => [...prevJobs, newJob]);
+  const handleJobCreated = (jobData) => {
+    console.log("Job created:", jobData);
+    alert(`Job "${jobData.title}" has been successfully created!`);
+    // Add additional logic here to update the UI if needed
   };
 
   return (
@@ -132,35 +118,34 @@ function App() {
             <Tab eventKey="displayJobs" title="Display Jobs">
               <Row>
                 <Col md={12}>
-                  <h3>Jobs on Smart Contract</h3>
-                  <JobList account={account} filter={filter} jobs={jobs} loading={loading} />
-
-                  <h3 className="mt-4">Jobs in the Database</h3>
+                  <h3>Jobs in the Database</h3>
                   <JobListDB account={account} filter={filter} />
+                  <h3>Jobs on Smart Contract</h3>
+                  <JobList account={account} filter={filter} />
                 </Col>
               </Row>
             </Tab>
             <Tab eventKey="clientJobs" title="Client Jobs">
               <Row>
                 <Col md={12}>
-                  <JobListClient account={account} /> {/* Render JobListClient */}
+                  <JobListClient account={account} />
                 </Col>
               </Row>
             </Tab>
             <Tab eventKey="freelancerJobs" title="Freelancer Jobs">
               <Row>
                 <Col md={12}>
-                  <JobListFreelance account={account} /> {/* Render JobListFreelance */}
+                  <JobListFreelance account={account} />
                 </Col>
               </Row>
             </Tab>
             <Tab eventKey="voteableJobs" title="Voteable Jobs">
-            <Row>
-              <Col md={12}>
-                <VoteableJobs />
-              </Col>
-            </Row>
-          </Tab>
+              <Row>
+                <Col md={12}>
+                  <VoteableJobs />
+                </Col>
+              </Row>
+            </Tab>
           </Tabs>
         </>
       )}

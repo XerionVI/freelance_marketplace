@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Form, Button, Alert } from "react-bootstrap";
 import axios from "axios";
+import config from "../config";
+
 
 function AuthForm({ isLogin, onAuthSuccess }) {
   const [username, setUsername] = useState("");
@@ -12,8 +14,8 @@ function AuthForm({ isLogin, onAuthSuccess }) {
     e.preventDefault();
     try {
       const endpoint = isLogin
-        ? "http://localhost:5000/api/auth/login"
-        : "http://localhost:5000/api/auth/register";
+        ? `${config.API_BASE_URL}/api/auth/login`
+        : `${config.API_BASE_URL}/api/auth/register`;
       const payload = isLogin ? { email, password } : { username, email, password };
       const response = await axios.post(endpoint, payload);
 

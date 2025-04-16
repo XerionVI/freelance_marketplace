@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal } from "react-bootstrap";
-import axios from "axios";
 import AddJobDetailsForm from "./AddJobDetailsForm";
+import axios from "axios";
+import config from "../config"; // Import the config file
 
 function JobListDB({ account, filter }) {
   const [jobs, setJobs] = useState([]);
@@ -11,31 +12,66 @@ function JobListDB({ account, filter }) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [jobDetails, setJobDetails] = useState(null);
 
+  // Function to close the modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedJobId(null); // Reset the selected job ID
+  };
+
+  // Function to close the details modal
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    setJobDetails(null); // Reset the job details
+  };
   // Fetch jobs from the API
   const fetchJobs = async () => {
     setLoading(true);
-    const token = localStorage.getItem("token"); // Retrieve the token from localStorage
-    if (!token) {
-      console.error("No token found in localStorage");
+    if (!account) {
+      console.error("No wallet address found.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/jobs", {
-        headers: { Authorization: `Bearer ${token}` }, // Include the token in the Authorization header
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found in localStorage");
+        setLoading(false);
+        return;
+      }
+
+            console.log("Headers being sent:", {
+        Authorization: `Bearer ${token}`,
+        "Wallet-Address": account,
       });
+
+      // Fetch jobs
+      const response = await axios.get(`${config.API_BASE_URL}/api/jobs`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Wallet-Address": account, // Include the wallet address in the headers
+        },
+      });
+
+      const jobsData = response.data;
 
       // Fetch job details for each job and add a `hasDetails` property
       const jobsWithDetails = await Promise.all(
-        response.data.map(async (job) => {
-          const detailsResponse = await axios.get(
-            `http://localhost:5000/api/jobs/details/${job.jobId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          return { ...job, hasDetails: detailsResponse.data ? true : false };
+        jobsData.map(async (job) => {
+          try {
+            const detailsResponse = await axios.get(
+              `${config.API_BASE_URL}/api/jobs/details/${job.jobId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            return { ...job, hasDetails: true, details: detailsResponse.data };
+          } catch (error) {
+            console.warn(`No details found for jobId: ${job.jobId}`);
+            return { ...job, hasDetails: false };
+          }
         })
       );
 
@@ -48,46 +84,14 @@ function JobListDB({ account, filter }) {
     }
   };
 
-  const handleAddDetails = (jobId) => {
-    setSelectedJobId(jobId);
-    setShowModal(true);
-  };
-
-  const handleShowDetails = async (jobId) => {
-    const token = localStorage.getItem("token");
-    try {
-      const response = await axios.get(
-        `http://localhost:5000/api/jobs/details/${jobId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setJobDetails(response.data);
-      setShowDetailsModal(true);
-    } catch (error) {
-      console.error("Error fetching job details:", error);
-    }
-  };
-
-  const handleEditDetails = (jobId) => {
-    setSelectedJobId(jobId);
-    setShowModal(true); // Reuse the modal for editing
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedJobId(null);
-  };
-
-  const handleCloseDetailsModal = () => {
-    setShowDetailsModal(false);
-    setJobDetails(null);
-  };
-
-  // Fetch jobs when the component mounts
   useEffect(() => {
+    console.log("Account in JobListDB:", account); // Debug log
     fetchJobs();
-  }, []);
+  }, [account]);
+
+  if (!account) {
+    return <p>Please connect your wallet to view jobs.</p>;
+  }
 
   if (loading) {
     return <p>Loading jobs...</p>;
@@ -96,7 +100,7 @@ function JobListDB({ account, filter }) {
   if (jobs.length === 0) {
     return <p>No jobs found.</p>; // Handle empty job list
   }
-  
+
   return (
     <div className="table-responsive">
       <Table striped bordered hover>
@@ -153,7 +157,7 @@ function JobListDB({ account, filter }) {
           ))}
         </tbody>
       </Table>
-  
+
       {/* Modal for Add/Edit Job Details */}
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
@@ -163,7 +167,7 @@ function JobListDB({ account, filter }) {
           <AddJobDetailsForm jobId={selectedJobId} />
         </Modal.Body>
       </Modal>
-  
+
       {/* Modal for Showing Job Details */}
       <Modal show={showDetailsModal} onHide={handleCloseDetailsModal} centered>
         <Modal.Header closeButton>

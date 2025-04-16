@@ -11,20 +11,31 @@ const db = mysql.createConnection({
 });
 
 exports.getJobs = (req, res) => {
-  const query = `SELECT * FROM jobs WHERE client = ? OR freelancer = ?`;
-  db.query(query, [req.user.id, req.user.id], (err, results) => {
+  const walletAddress = req.headers["wallet-address"]; // Use lowercase header name
+
+  if (!walletAddress) {
+    return res.status(400).send("Wallet address is required.");
+  }
+
+  // Query to fetch jobs for the wallet address
+  const jobQuery = `SELECT * FROM jobs WHERE client = ? OR freelancer = ?`;
+  db.query(jobQuery, [walletAddress, walletAddress], (err, jobResults) => {
     if (err) {
       console.error("Error fetching jobs:", err);
-      res.status(500).send("Error fetching job data.");
-    } else {
-      res.status(200).json(results);
+      return res.status(500).send("Error fetching job data.");
     }
+
+    res.status(200).json(jobResults);
   });
 };
 
 exports.addJob = (req, res) => {
-  const { freelancer, amount, blockNumber, transactionHash } = req.body;
-  const client = req.user.id;
+  const { client, freelancer, amount, blockNumber, transactionHash } = req.body;
+
+  // Ensure the client field (wallet address) is provided
+  if (!client) {
+    return res.status(400).send("Client wallet address is required.");
+  }
 
   const query = `INSERT INTO jobs (client, freelancer, amount, blockNumber, transactionHash) VALUES (?, ?, ?, ?, ?)`;
 

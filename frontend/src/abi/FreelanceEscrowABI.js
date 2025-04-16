@@ -157,6 +157,19 @@ const FreelanceEscrowABI = [
 		"type": "function"
 	  },
 	  {
+		"inputs": [],
+		"name": "getAllJobIds",
+		"outputs": [
+		  {
+			"internalType": "uint256[]",
+			"name": "",
+			"type": "uint256[]"
+		  }
+		],
+		"stateMutability": "view",
+		"type": "function"
+	  },
+	  {
 		"inputs": [
 		  {
 			"internalType": "uint256",
@@ -191,19 +204,6 @@ const FreelanceEscrowABI = [
 		"type": "function"
 	  },
 	  {
-		"inputs": [],
-		"name": "getTotalJobs",
-		"outputs": [
-		  {
-			"internalType": "uint256",
-			"name": "",
-			"type": "uint256"
-		  }
-		],
-		"stateMutability": "view",
-		"type": "function"
-	  },
-	  {
 		"inputs": [
 		  {
 			"internalType": "uint256",
@@ -224,6 +224,25 @@ const FreelanceEscrowABI = [
 	  {
 		"inputs": [],
 		"name": "jobCount",
+		"outputs": [
+		  {
+			"internalType": "uint256",
+			"name": "",
+			"type": "uint256"
+		  }
+		],
+		"stateMutability": "view",
+		"type": "function"
+	  },
+	  {
+		"inputs": [
+		  {
+			"internalType": "uint256",
+			"name": "",
+			"type": "uint256"
+		  }
+		],
+		"name": "jobIds",
 		"outputs": [
 		  {
 			"internalType": "uint256",

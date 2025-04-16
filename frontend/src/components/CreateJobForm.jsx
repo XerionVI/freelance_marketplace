@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import { Button, Form, Alert } from "react-bootstrap";
 import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
+import config from "../config";
 
 function CreateJobForm({ account, onJobCreated }) {
   const [freelancerAddress, setFreelancerAddress] = useState("");
@@ -11,41 +12,40 @@ function CreateJobForm({ account, onJobCreated }) {
   const handleCreateJob = async () => {
     const contract = await getFreelanceEscrowContract(account);
     if (!contract) return;
-
+  
     try {
       const tx = await contract.createJob(freelancerAddress, {
         value: ethers.parseEther(deposit),
       });
-
+  
       const receipt = await tx.wait();
       console.log("Transaction receipt:", receipt);
-
+  
       const eventFilter = contract.filters.JobCreated();
       const events = await contract.queryFilter(eventFilter, receipt.blockNumber, "latest");
-
+  
       console.log("Events found:", events);
-
+  
       if (events.length > 0) {
         const { jobId, client, freelancer, amount } = events[0].args;
-
+  
         const jobData = {
-          client,
+          client: account, // Use the currently logged-in wallet address
           freelancer,
           amount: ethers.formatEther(amount),
           blockNumber: events[0].blockNumber,
           transactionHash: events[0].transactionHash,
         };
-
-        // Retrieve the token from localStorage
+  
         const token = localStorage.getItem("token");
         if (!token) {
           console.error("No token found in localStorage");
           setMessage("Failed to save job: User is not authenticated.");
           return;
         }
-
+  
         // Save the job to the database
-        const response = await fetch("/api/jobs", {
+        const response = await fetch(`${config.API_BASE_URL}/api/jobs`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -53,7 +53,7 @@ function CreateJobForm({ account, onJobCreated }) {
           },
           body: JSON.stringify(jobData),
         });
-
+  
         if (response.ok) {
           const responseData = await response.json();
           console.log("Job saved to database with jobId:", responseData.jobId);
@@ -63,8 +63,13 @@ function CreateJobForm({ account, onJobCreated }) {
           console.error("Error saving job to database.");
           setMessage("Job created but failed to save to database.");
         }
-
-        onJobCreated(jobData);
+  
+        if (typeof onJobCreated === "function") {
+          console.log("Calling onJobCreated with jobData:", jobData);
+          onJobCreated(jobData);
+        } else {
+          console.warn("onJobCreated is not a function.");
+        }
       } else {
         console.error("No JobCreated event found.");
         setMessage("Job creation succeeded, but no event found.");
