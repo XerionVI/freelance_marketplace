@@ -6,6 +6,8 @@ import CreateJobForm from "./components/CreateJobForm";
 import JobListDB from "./components/JobListDB";
 import JobList from "./components/JobList";
 import VoteableJobs from "./components/VoteableJobs";
+import JobDetailsPage from "./components/JobDetailsPage"; // Import the JobDetailsPage component
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -15,7 +17,7 @@ function App() {
   const [username, setUsername] = useState(null);
 
   useEffect(() => {
-      const connectWallet = async () => {
+    const connectWallet = async () => {
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -74,66 +76,82 @@ function App() {
   };
 
   return (
-    <Container className="mt-5">
-      <h1 className="text-center mb-4">Freelance Marketplace</h1>
+    <Router>
+      <Container className="mt-5">
+        <h1 className="text-center mb-4">Freelance Marketplace</h1>
 
-      <div className="text-center mb-4">
-        {account ? (
-          <Alert variant="info">
-            Connected as {account}
-            {username && <div>Logged in as: <strong>{username}</strong></div>}
-          </Alert>
+        <div className="text-center mb-4">
+          {account ? (
+            <Alert variant="info">
+              Connected as {account}
+              {username && <div>Logged in as: <strong>{username}</strong></div>}
+            </Alert>
+          ) : (
+            <Alert variant="warning">Please connect to MetaMask.</Alert>
+          )}
+        </div>
+
+        {!token ? (
+          <Row>
+            <Col md={6}>
+              <AuthForm isLogin={true} onAuthSuccess={handleAuthSuccess} />
+            </Col>
+            <Col md={6}>
+              <AuthForm isLogin={false} onAuthSuccess={handleAuthSuccess} />
+            </Col>
+          </Row>
         ) : (
-          <Alert variant="warning">Please connect to MetaMask.</Alert>
+          <Routes>
+            {/* Main Tabs */}
+            <Route
+              path="/"
+              element={
+                <>
+                  <div className="text-end mb-3">
+                    <Button variant="danger" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  </div>
+                  <Tabs defaultActiveKey="displayJobs" id="freelance-tabs" className="mb-4">
+                    <Tab eventKey="createJob" title="Create Job">
+                      <Row>
+                        <Col md={8} className="mx-auto">
+                          <CreateJobForm account={account} onJobCreated={handleJobCreated} />
+                        </Col>
+                      </Row>
+                    </Tab>
+
+                    <Tab eventKey="displayJobs" title="Display Jobs">
+                      <Row>
+                        <Col md={12}>
+                          <h3>Jobs in the Database</h3>
+                          <JobListDB account={account} filter={filter} />
+                          <h3>Jobs on Smart Contract</h3>
+                          <JobList account={account} filter={filter} />
+                        </Col>
+                      </Row>
+                    </Tab>
+                    <Tab eventKey="voteableJobs" title="Voteable Jobs">
+                      <Row>
+                        <Col md={12}>
+                          <VoteableJobs />
+                        </Col>
+                      </Row>
+                    </Tab>
+                  </Tabs>
+                </>
+              }
+            />
+
+            {/* Job Details Page */}
+            <Route
+              path="/job-details/:jobId"
+              element={<JobDetailsPage account={account} token={token} />}
+            />
+          </Routes>
         )}
-      </div>
-
-      {!token ? (
-        <Row>
-          <Col md={6}>
-            <AuthForm isLogin={true} onAuthSuccess={handleAuthSuccess} />
-          </Col>
-          <Col md={6}>
-            <AuthForm isLogin={false} onAuthSuccess={handleAuthSuccess} />
-          </Col>
-        </Row>
-      ) : (
-        <>
-          <div className="text-end mb-3">
-            <Button variant="danger" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
-          <Tabs defaultActiveKey="displayJobs" id="freelance-tabs" className="mb-4">
-            <Tab eventKey="createJob" title="Create Job">
-              <Row>
-                <Col md={8} className="mx-auto">
-                  <CreateJobForm account={account} onJobCreated={handleJobCreated} />
-                </Col>
-              </Row>
-            </Tab>
-
-            <Tab eventKey="displayJobs" title="Display Jobs">
-              <Row>
-                <Col md={12}>
-                  <h3>Jobs in the Database</h3>
-                  <JobListDB account={account} filter={filter} />
-                  <h3>Jobs on Smart Contract</h3>
-                  <JobList account={account} filter={filter} />
-                </Col>
-              </Row>
-            </Tab>
-            <Tab eventKey="voteableJobs" title="Voteable Jobs">
-              <Row>
-                <Col md={12}>
-                  <VoteableJobs />
-                </Col>
-              </Row>
-            </Tab>
-          </Tabs>
-        </>
-      )}
-    </Container>
+      </Container>
+    </Router>
   );
 }
 

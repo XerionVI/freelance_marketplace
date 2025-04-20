@@ -47,7 +47,7 @@ exports.getJobById = (req, res) => {
 
   const query = `
     SELECT j.job_id, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
-           jd.title AS jobTitle, jd.description AS jobDescription
+           jd.title AS jobTitle, jd.description
     FROM jobs j
     LEFT JOIN job_details jd ON j.job_id = jd.job_id
     WHERE j.job_id = ? AND (j.client = ? OR j.freelancer = ?)

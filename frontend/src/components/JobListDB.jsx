@@ -3,6 +3,7 @@ import { Table, Button, Modal } from "react-bootstrap";
 import AddJobDetailsForm from "./AddJobDetailsForm";
 import axios from "axios";
 import config from "../config"; // Import the config file
+import { useNavigate } from "react-router-dom"; // Import navigation hook
 
 function JobListDB({ account, filter }) {
   const [jobs, setJobs] = useState([]);
@@ -11,16 +12,22 @@ function JobListDB({ account, filter }) {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [jobDetails, setJobDetails] = useState(null);
+  const navigate = useNavigate(); // Initialize navigation
 
   const token = localStorage.getItem("token"); // Retrieve the token once
 
-  // Function to close the modal
+  // Function to navigate to the Job Details page
+  const handleShowDetails = (jobId) => {
+    navigate(`/job-details/${jobId}`); // Navigate to the job details page
+  };
+
+  // Function to close the Add/Edit Job Details modal
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedJobId(null); // Reset the selected job ID
   };
 
-  // Function to close the details modal
+  // Function to close the Show Job Details modal
   const handleCloseDetailsModal = () => {
     setShowDetailsModal(false);
     setJobDetails(null); // Reset the job details
@@ -124,7 +131,7 @@ function JobListDB({ account, filter }) {
             <th>Job ID</th>
             <th>Client</th>
             <th>Freelancer</th>
-            <th>Amount</th>
+            <th>Amount (ETH)</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -156,14 +163,12 @@ function JobListDB({ account, filter }) {
                     Add Details
                   </Button>
                 )}
-                {job.hasDetails && (
-                  <Button
-                    variant="success"
-                    onClick={() => setShowDetailsModal(true) || setJobDetails(job.details)}
-                  >
-                    Show Details
-                  </Button>
-                )}
+                <Button
+                  variant="success"
+                  onClick={() => handleShowDetails(job.job_id)}
+                >
+                  Show Details
+                </Button>
               </td>
             </tr>
           ))}
@@ -177,23 +182,6 @@ function JobListDB({ account, filter }) {
         </Modal.Header>
         <Modal.Body>
           <AddJobDetailsForm jobId={selectedJobId} token={token} account={account} />
-        </Modal.Body>
-      </Modal>
-
-      {/* Modal for Showing Job Details */}
-      <Modal show={showDetailsModal} onHide={handleCloseDetailsModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Job Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {jobDetails ? (
-            <div>
-              <p><strong>Job Title:</strong> {jobDetails.title}</p>
-              <p><strong>Description:</strong> {jobDetails.description}</p>
-            </div>
-          ) : (
-            <p>Loading job details...</p>
-          )}
         </Modal.Body>
       </Modal>
     </div>
