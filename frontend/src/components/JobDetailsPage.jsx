@@ -1,26 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Button, Form, Alert, Table } from "react-bootstrap";
+import {
+  Box,
+  Typography,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Button,
+  Alert,
+  CircularProgress,
+  Paper,
+  TextField,
+} from "@mui/material";
 import axios from "axios";
 import config from "../config";
+import NotesModal from "./NotesModal"; // Import the NotesModal component
 
 function JobDetailsPage({ account, token }) {
-  const { jobId } = useParams(); // Get jobId from the URL
+  const { jobId } = useParams();
   const [jobDetails, setJobDetails] = useState(null);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [jobFiles, setJobFiles] = useState([]); // State to store uploaded files
+  const [jobFiles, setJobFiles] = useState([]);
+  const [selectedFileId, setSelectedFileId] = useState(null);
+  const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState("");
+  const [showNotesModal, setShowNotesModal] = useState(false);
 
-  // Fetch job details
   useEffect(() => {
     const fetchJobDetails = async () => {
-      if (!jobId || !account || !token) {
-        setMessage("Missing required information to fetch job details.");
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const response = await axios.get(`${config.API_BASE_URL}/api/jobs/${jobId}`, {
           headers: {
@@ -31,12 +43,9 @@ function JobDetailsPage({ account, token }) {
 
         if (response.status === 200) {
           setJobDetails(response.data);
-        } else {
-          setMessage("Failed to fetch job details.");
         }
       } catch (error) {
         console.error("Error fetching job details:", error);
-        setMessage("Error fetching job details.");
       } finally {
         setIsLoading(false);
       }
@@ -52,13 +61,10 @@ function JobDetailsPage({ account, token }) {
         });
 
         if (response.status === 200) {
-          setJobFiles(response.data); // Set the uploaded files
-        } else {
-          setMessage("Failed to fetch job files.");
+          setJobFiles(response.data);
         }
       } catch (error) {
         console.error("Error fetching job files:", error);
-        setMessage("Error fetching job files.");
       }
     };
 
@@ -66,7 +72,6 @@ function JobDetailsPage({ account, token }) {
     fetchJobFiles();
   }, [jobId, account, token]);
 
-  // Handle file upload
   const handleFileUpload = async (e) => {
     e.preventDefault();
 
@@ -90,78 +95,144 @@ function JobDetailsPage({ account, token }) {
 
       if (response.status === 200) {
         setMessage("File uploaded successfully!");
-        setJobFiles((prevFiles) => [...prevFiles, response.data]); // Add the new file to the list
-      } else {
-        setMessage("Failed to upload file.");
+        setJobFiles((prevFiles) => [...prevFiles, response.data]);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      setMessage("Error uploading file.");
+    }
+  };
+
+  const handleShowNotes = async (fileId) => {
+    setSelectedFileId(fileId);
+    setShowNotesModal(true);
+
+    try {
+      const response = await axios.get(`${config.API_BASE_URL}/api/notes/${fileId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        setNotes(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+
+    const addedBy = account === jobDetails.client ? "Client" : "Freelancer";
+
+    try {
+      const response = await axios.post(
+        `${config.API_BASE_URL}/api/notes/${selectedFileId}`,
+        { note: newNote, addedBy },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setNotes((prevNotes) => [
+          ...prevNotes,
+          { note: newNote, added_by: addedBy, added_at: new Date() },
+        ]);
+        setNewNote("");
+      }
+    } catch (error) {
+      console.error("Error adding note:", error);
     }
   };
 
   if (isLoading) {
-    return <p>Loading job details...</p>;
-  }
-
-  if (!jobDetails) {
-    return <p>{message || "No job details found."}</p>;
+    return (
+      <Box sx={{ textAlign: "center", mt: 4 }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading job details...
+        </Typography>
+      </Box>
+    );
   }
 
   return (
-    <div>
-      <h3>Job Details</h3>
-      <div>
-        <p><strong>Job ID:</strong> {jobDetails.job_id}</p>
-        <p><strong>Client:</strong> {jobDetails.client}</p>
-        <p><strong>Freelancer:</strong> {jobDetails.freelancer}</p>
-        <p><strong>Amount:</strong> {jobDetails.amount} ETH</p>
-        <p><strong>Status:</strong> {jobDetails.status}</p>
-        <p><strong>Job Title:</strong> {jobDetails.jobTitle || "N/A"}</p>
-        <p><strong>Description:</strong> {jobDetails.description || "N/A"}</p>
-      </div>
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Job Details
+      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="body1"><strong>Job ID:</strong> {jobDetails.job_id}</Typography>
+        <Typography variant="body1"><strong>Client:</strong> {jobDetails.client}</Typography>
+        <Typography variant="body1"><strong>Freelancer:</strong> {jobDetails.freelancer}</Typography>
+        <Typography variant="body1"><strong>Amount:</strong> {jobDetails.amount} ETH</Typography>
+        <Typography variant="body1"><strong>Status:</strong> {jobDetails.status}</Typography>
+        <Typography variant="body1"><strong>Job Title:</strong> {jobDetails.jobTitle || "N/A"}</Typography>
+        <Typography variant="body1"><strong>Description:</strong> {jobDetails.description || "N/A"}</Typography>
+      </Box>
 
-      <h4>Uploaded Files</h4>
-      {jobFiles.length > 0 ? (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>File Name</th>
-              <th>Uploaded By</th>
-              <th>Uploaded At</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Typography variant="h5" gutterBottom>
+        Uploaded Files
+      </Typography>
+      <TableContainer component={Paper} sx={{ mb: 4 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>File Name</TableCell>
+              <TableCell>Uploaded By</TableCell>
+              <TableCell>Uploaded At</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {jobFiles.map((file, index) => (
-              <tr key={file.file_id}>
-                <td>{index + 1}</td>
-                <td>{file.file_name}</td>
-                <td>{file.uploaded_by}</td>
-                <td>{new Date(file.uploaded_at).toLocaleString()}</td>
-              </tr>
+              <TableRow key={file.file_id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{file.file_name}</TableCell>
+                <TableCell>{file.uploaded_by}</TableCell>
+                <TableCell>{new Date(file.uploaded_at).toLocaleString()}</TableCell>
+                <TableCell>
+                  <Button variant="outlined" color="primary" onClick={() => handleShowNotes(file.file_id)}>
+                    View Notes
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
+          </TableBody>
         </Table>
-      ) : (
-        <p>No files uploaded for this job.</p>
-      )}
+      </TableContainer>
 
-      <h4>Upload File</h4>
-      {message && <Alert variant="info">{message}</Alert>}
-      <Form onSubmit={handleFileUpload}>
-        <Form.Group controlId="fileUpload">
-          <Form.Label>Select File</Form.Label>
-          <Form.Control
-            type="file"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-        </Form.Group>
-        <Button variant="primary" type="submit" className="mt-3">
+      <Typography variant="h5" gutterBottom>
+        Upload File
+      </Typography>
+      {message && <Alert severity="info" sx={{ mb: 2 }}>{message}</Alert>}
+      <Box component="form" onSubmit={handleFileUpload} sx={{ mb: 4 }}>
+        <TextField
+          type="file"
+          fullWidth
+          onChange={(e) => setFile(e.target.files[0])}
+          sx={{ mb: 2 }}
+        />
+        <Button variant="contained" color="primary" type="submit">
           Upload File
         </Button>
-      </Form>
-    </div>
+      </Box>
+
+      {/* Notes Modal */}
+      <NotesModal
+        show={showNotesModal}
+        onHide={() => setShowNotesModal(false)}
+        notes={notes}
+        newNote={newNote}
+        setNewNote={setNewNote}
+        handleAddNote={handleAddNote}
+      />
+    </Box>
   );
 }
 

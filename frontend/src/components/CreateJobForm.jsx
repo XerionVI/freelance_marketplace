@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
-import { Button, Form, Alert } from "react-bootstrap";
+import { Box, TextField, Button, Alert, Typography, CircularProgress } from "@mui/material";
 import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
 import config from "../config";
 
@@ -9,6 +9,7 @@ function CreateJobForm({ account, onJobCreated }) {
   const [deposit, setDeposit] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleCreateJob = async () => {
     const contract = await getFreelanceEscrowContract(account);
@@ -16,8 +17,21 @@ function CreateJobForm({ account, onJobCreated }) {
 
     setIsLoading(true);
     setMessage("");
+    setError("");
 
     try {
+      // Validate inputs
+      if (!ethers.isAddress(freelancerAddress)) {
+        setError("Invalid freelancer address.");
+        setIsLoading(false);
+        return;
+      }
+      if (isNaN(deposit) || parseFloat(deposit) <= 0) {
+        setError("Deposit amount must be a positive number.");
+        setIsLoading(false);
+        return;
+      }
+
       // Create the job on the blockchain
       const tx = await contract.createJob(freelancerAddress, {
         value: ethers.parseEther(deposit),
@@ -86,48 +100,62 @@ function CreateJobForm({ account, onJobCreated }) {
       }
     } catch (error) {
       console.error("Error creating job:", error);
-      setMessage("Job creation failed. Check console for details.");
+      setError("Job creation failed. Check console for details.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div>
-      <h5>Create New Job</h5>
-      <Form>
-        <Form.Group controlId="freelancerAddress">
-          <Form.Label>Freelancer Address</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter freelancer's address"
-            value={freelancerAddress}
-            onChange={(e) => setFreelancerAddress(e.target.value)}
-            required
-          />
-        </Form.Group>
-        <Form.Group controlId="depositAmount">
-          <Form.Label>Deposit Amount (ETH)</Form.Label>
-          <Form.Control
-            type="number"
-            placeholder="Enter amount in ETH"
-            value={deposit}
-            onChange={(e) => setDeposit(e.target.value)}
-            required
-          />
-        </Form.Group>
+    <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, p: 3, border: "1px solid #ccc", borderRadius: 2 }}>
+      <Typography variant="h5" gutterBottom>
+        Create New Job
+      </Typography>
+      <Box component="form" noValidate autoComplete="off">
+        <TextField
+          fullWidth
+          label="Freelancer Address"
+          variant="outlined"
+          margin="normal"
+          value={freelancerAddress}
+          onChange={(e) => setFreelancerAddress(e.target.value)}
+          error={!!error && error.includes("address")}
+          helperText={error && error.includes("address") ? error : ""}
+        />
+        <TextField
+          fullWidth
+          label="Deposit Amount (ETH)"
+          variant="outlined"
+          margin="normal"
+          type="number"
+          value={deposit}
+          onChange={(e) => setDeposit(e.target.value)}
+          error={!!error && error.includes("Deposit")}
+          helperText={error && error.includes("Deposit") ? error : ""}
+        />
         <Button
-          variant="primary"
+          variant="contained"
+          color="primary"
           onClick={handleCreateJob}
-          className="mt-3"
           disabled={isLoading}
+          fullWidth
+          sx={{ mt: 2 }}
         >
-          {isLoading ? "Creating Job..." : "Create Job"}
+          {isLoading ? <CircularProgress size={24} /> : "Create Job"}
         </Button>
-      </Form>
+      </Box>
 
-      {message && <Alert className="mt-3">{message}</Alert>}
-    </div>
+      {message && (
+        <Alert severity="success" sx={{ mt: 3 }}>
+          {message}
+        </Alert>
+      )}
+      {error && (
+        <Alert severity="error" sx={{ mt: 3 }}>
+          {error}
+        </Alert>
+      )}
+    </Box>
   );
 }
 

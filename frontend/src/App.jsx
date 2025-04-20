@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Button, Alert, Tabs, Tab } from "react-bootstrap";
+import { Container, Box, Typography, Tabs, Tab, Button, Alert, Grid } from "@mui/material";
 import axios from "axios";
 import AuthForm from "./components/AuthForm";
 import CreateJobForm from "./components/CreateJobForm";
@@ -15,6 +15,7 @@ function App() {
   const [filter, setFilter] = useState("All Jobs");
   const [token, setToken] = useState(localStorage.getItem("token")); // Load token from localStorage
   const [username, setUsername] = useState(null);
+  const [tabValue, setTabValue] = useState("displayJobs");
 
   useEffect(() => {
     const connectWallet = async () => {
@@ -75,31 +76,41 @@ function App() {
     // Add additional logic here to update the UI if needed
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   return (
     <Router>
-      <Container className="mt-5">
-        <h1 className="text-center mb-4">Freelance Marketplace</h1>
+      <Container maxWidth="lg" sx={{ mt: 5 }}>
+        <Typography variant="h3" align="center" gutterBottom>
+          Freelance Marketplace
+        </Typography>
 
-        <div className="text-center mb-4">
+        <Box sx={{ mb: 4 }}>
           {account ? (
-            <Alert variant="info">
+            <Alert severity="info">
               Connected as {account}
-              {username && <div>Logged in as: <strong>{username}</strong></div>}
+              {username && (
+                <Typography variant="body1">
+                  Logged in as: <strong>{username}</strong>
+                </Typography>
+              )}
             </Alert>
           ) : (
-            <Alert variant="warning">Please connect to MetaMask.</Alert>
+            <Alert severity="warning">Please connect to MetaMask.</Alert>
           )}
-        </div>
+        </Box>
 
         {!token ? (
-          <Row>
-            <Col md={6}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
               <AuthForm isLogin={true} onAuthSuccess={handleAuthSuccess} />
-            </Col>
-            <Col md={6}>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <AuthForm isLogin={false} onAuthSuccess={handleAuthSuccess} />
-            </Col>
-          </Row>
+            </Grid>
+          </Grid>
         ) : (
           <Routes>
             {/* Main Tabs */}
@@ -107,38 +118,52 @@ function App() {
               path="/"
               element={
                 <>
-                  <div className="text-end mb-3">
-                    <Button variant="danger" onClick={handleLogout}>
+                  <Box sx={{ textAlign: "right", mb: 3 }}>
+                    <Button variant="contained" color="error" onClick={handleLogout}>
                       Logout
                     </Button>
-                  </div>
-                  <Tabs defaultActiveKey="displayJobs" id="freelance-tabs" className="mb-4">
-                    <Tab eventKey="createJob" title="Create Job">
-                      <Row>
-                        <Col md={8} className="mx-auto">
-                          <CreateJobForm account={account} onJobCreated={handleJobCreated} />
-                        </Col>
-                      </Row>
-                    </Tab>
-
-                    <Tab eventKey="displayJobs" title="Display Jobs">
-                      <Row>
-                        <Col md={12}>
-                          <h3>Jobs in the Database</h3>
-                          <JobListDB account={account} filter={filter} />
-                          <h3>Jobs on Smart Contract</h3>
-                          <JobList account={account} filter={filter} />
-                        </Col>
-                      </Row>
-                    </Tab>
-                    <Tab eventKey="voteableJobs" title="Voteable Jobs">
-                      <Row>
-                        <Col md={12}>
-                          <VoteableJobs />
-                        </Col>
-                      </Row>
-                    </Tab>
+                  </Box>
+                  <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    indicatorColor="primary"
+                    textColor="primary"
+                    centered
+                    sx={{ mb: 4 }}
+                  >
+                    <Tab label="Create Job" value="createJob" />
+                    <Tab label="Display Jobs" value="displayJobs" />
+                    <Tab label="Voteable Jobs" value="voteableJobs" />
                   </Tabs>
+
+                  {tabValue === "createJob" && (
+                    <Grid container justifyContent="center">
+                      <Grid item xs={12} md={8}>
+                        <CreateJobForm account={account} onJobCreated={handleJobCreated} />
+                      </Grid>
+                    </Grid>
+                  )}
+
+                  {tabValue === "displayJobs" && (
+                    <Grid container spacing={4}>
+                      <Grid item xs={12}>
+                        <Typography variant="h5">Jobs in the Database</Typography>
+                        <JobListDB account={account} filter={filter} />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="h5">Jobs on Smart Contract</Typography>
+                        <JobList account={account} filter={filter} />
+                      </Grid>
+                    </Grid>
+                  )}
+
+                  {tabValue === "voteableJobs" && (
+                    <Grid container>
+                      <Grid item xs={12}>
+                        <VoteableJobs />
+                      </Grid>
+                    </Grid>
+                  )}
                 </>
               }
             />

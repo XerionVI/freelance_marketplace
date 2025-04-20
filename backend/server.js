@@ -41,6 +41,9 @@ app.use("/api/jobs", jobRoutes);
 const fileRoutes = require("./routes/file");
 app.use("/api/files", fileRoutes);
 
+const noteRoutes = require("./routes/note");
+app.use("/api/notes", noteRoutes);
+
 // Serve React frontend for other routes (this must come last)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));

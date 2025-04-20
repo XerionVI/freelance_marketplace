@@ -1,51 +1,50 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal } from "react-bootstrap";
-import AddJobDetailsForm from "./AddJobDetailsForm";
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Button,
+  CircularProgress,
+  Typography,
+  Paper,
+  Alert,
+} from "@mui/material";
+import AddJobDetailsForm from "./AddJobDetailsForm"; // Ensure this component is imported
 import axios from "axios";
-import config from "../config"; // Import the config file
-import { useNavigate } from "react-router-dom"; // Import navigation hook
+import config from "../config";
+import { useNavigate } from "react-router-dom";
 
 function JobListDB({ account, filter }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [jobDetails, setJobDetails] = useState(null);
-  const navigate = useNavigate(); // Initialize navigation
+  const navigate = useNavigate();
 
-  const token = localStorage.getItem("token"); // Retrieve the token once
+  const token = localStorage.getItem("token");
 
-  // Function to navigate to the Job Details page
   const handleShowDetails = (jobId) => {
-    navigate(`/job-details/${jobId}`); // Navigate to the job details page
+    navigate(`/job-details/${jobId}`);
   };
 
-  // Function to close the Add/Edit Job Details modal
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedJobId(null); // Reset the selected job ID
+    setSelectedJobId(null);
   };
 
-  // Function to close the Show Job Details modal
-  const handleCloseDetailsModal = () => {
-    setShowDetailsModal(false);
-    setJobDetails(null); // Reset the job details
-  };
-
-  // Function to handle adding job details
   const handleAddDetails = (jobId) => {
-    setSelectedJobId(jobId); // Set the selected job ID
-    setShowModal(true); // Open the modal
+    setSelectedJobId(jobId);
+    setShowModal(true);
   };
 
-  // Function to handle editing job details
   const handleEditDetails = (jobId) => {
-    setSelectedJobId(jobId); // Set the selected job ID
-    setShowModal(true); // Open the modal
+    setSelectedJobId(jobId);
+    setShowModal(true);
   };
 
-  // Fetch jobs from the API
   const fetchJobs = async () => {
     setLoading(true);
     if (!account) {
@@ -61,22 +60,15 @@ function JobListDB({ account, filter }) {
         return;
       }
 
-      console.log("Headers being sent:", {
-        Authorization: `Bearer ${token}`,
-        "Wallet-Address": account,
-      });
-
-      // Fetch jobs
       const response = await axios.get(`${config.API_BASE_URL}/api/jobs`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Wallet-Address": account, // Include the wallet address in the headers
+          "Wallet-Address": account,
         },
       });
 
       const jobsData = response.data;
 
-      // Fetch job details for each job and add a `hasDetails` property
       const jobsWithDetails = await Promise.all(
         jobsData.map(async (job) => {
           try {
@@ -96,7 +88,6 @@ function JobListDB({ account, filter }) {
         })
       );
 
-      console.log("Jobs fetched from backend:", jobsWithDetails); // Debugging log
       setJobs(jobsWithDetails);
     } catch (error) {
       console.error("Error fetching jobs from database:", error);
@@ -106,85 +97,101 @@ function JobListDB({ account, filter }) {
   };
 
   useEffect(() => {
-    console.log("Account in JobListDB:", account); // Debug log
     fetchJobs();
   }, [account]);
 
   if (!account) {
-    return <p>Please connect your wallet to view jobs.</p>;
+    return <Alert severity="warning">Please connect your wallet to view jobs.</Alert>;
   }
 
   if (loading) {
-    return <p>Loading jobs...</p>;
+    return (
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading jobs...
+        </Typography>
+      </div>
+    );
   }
 
   if (jobs.length === 0) {
-    return <p>No jobs found.</p>; // Handle empty job list
+    return <Alert severity="info">No jobs found.</Alert>;
   }
 
   return (
-    <div className="table-responsive">
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Job ID</th>
-            <th>Client</th>
-            <th>Freelancer</th>
-            <th>Amount (ETH)</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {jobs.map((job, index) => (
-            <tr key={job.job_id}>
-              <td>{index + 1}</td>
-              <td>{job.job_id}</td>
-              <td>{job.client}</td>
-              <td>{job.freelancer}</td>
-              <td>{job.amount}</td>
-              <td>{job.status}</td>
-              <td>
-                {job.hasDetails ? (
+    <>
+      <TableContainer component={Paper} sx={{ mt: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, textAlign: "center" }}>
+          Job List
+        </Typography>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>Job ID</TableCell>
+              <TableCell>Client</TableCell>
+              <TableCell>Freelancer</TableCell>
+              <TableCell>Amount (ETH)</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {jobs.map((job, index) => (
+              <TableRow key={job.job_id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{job.job_id}</TableCell>
+                <TableCell>{job.client}</TableCell>
+                <TableCell>{job.freelancer}</TableCell>
+                <TableCell>{job.amount}</TableCell>
+                <TableCell>{job.status}</TableCell>
+                <TableCell>
+                  {job.hasDetails ? (
+                    <Button
+                      variant="outlined"
+                      color="warning"
+                      onClick={() => handleEditDetails(job.job_id)}
+                      sx={{ mr: 1 }}
+                    >
+                      Edit Details
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      color="info"
+                      onClick={() => handleAddDetails(job.job_id)}
+                      sx={{ mr: 1 }}
+                    >
+                      Add Details
+                    </Button>
+                  )}
                   <Button
-                    variant="warning"
-                    onClick={() => handleEditDetails(job.job_id)}
-                    className="me-2"
+                    variant="contained"
+                    color="success"
+                    onClick={() => handleShowDetails(job.job_id)}
                   >
-                    Edit Details
+                    Show Details
                   </Button>
-                ) : (
-                  <Button
-                    variant="info"
-                    onClick={() => handleAddDetails(job.job_id)}
-                    className="me-2"
-                  >
-                    Add Details
-                  </Button>
-                )}
-                <Button
-                  variant="success"
-                  onClick={() => handleShowDetails(job.job_id)}
-                >
-                  Show Details
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* Modal for Add/Edit Job Details */}
-      <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedJobId ? "Edit Job Details" : "Add Job Details"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <AddJobDetailsForm jobId={selectedJobId} token={token} account={account} />
-        </Modal.Body>
-      </Modal>
-    </div>
+      {/* Modal for Adding/Editing Job Details */}
+      {showModal && (
+        <AddJobDetailsForm
+          open={showModal}
+          onClose={handleCloseModal}
+          jobId={selectedJobId}
+          existingDetails={
+            jobs.find((job) => job.job_id === selectedJobId)?.details || {}
+          }
+        />
+      )}
+    </>
   );
 }
 
