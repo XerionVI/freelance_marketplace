@@ -10,6 +10,7 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME,
 });
 
+// Fetch all jobs for the logged-in wallet address
 exports.getJobs = (req, res) => {
   const walletAddress = req.headers["wallet-address"]; // Use lowercase header name
 
@@ -17,106 +18,178 @@ exports.getJobs = (req, res) => {
     return res.status(400).send("Wallet address is required.");
   }
 
-  // Query to fetch jobs for the wallet address
-  const jobQuery = `SELECT * FROM jobs WHERE client = ? OR freelancer = ?`;
-  db.query(jobQuery, [walletAddress, walletAddress], (err, jobResults) => {
+  const query = `
+    SELECT j.job_id, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
+           jd.title AS jobTitle, jd.description AS jobDescription
+    FROM jobs j
+    LEFT JOIN job_details jd ON j.job_id = jd.job_id
+    WHERE j.client = ? OR j.freelancer = ?
+  `;
+
+  db.query(query, [walletAddress, walletAddress], (err, results) => {
     if (err) {
       console.error("Error fetching jobs:", err);
-      return res.status(500).send("Error fetching job data.");
+      return res.status(500).send("Error fetching jobs.");
     }
 
-    res.status(200).json(jobResults);
+    res.status(200).json(results);
   });
 };
 
-exports.addJob = (req, res) => {
-  const { client, freelancer, amount, blockNumber, transactionHash } = req.body;
+// Fetch a specific job and its details by job ID and wallet address
+exports.getJobById = (req, res) => {
+  const walletAddress = req.headers["wallet-address"];
+  const { jobId } = req.params;
 
-  // Ensure the client field (wallet address) is provided
+  if (!walletAddress) {
+    return res.status(400).send("Wallet address is required.");
+  }
+
+  const query = `
+    SELECT j.job_id, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
+           jd.title AS jobTitle, jd.description AS jobDescription
+    FROM jobs j
+    LEFT JOIN job_details jd ON j.job_id = jd.job_id
+    WHERE j.job_id = ? AND (j.client = ? OR j.freelancer = ?)
+  `;
+
+  db.query(query, [jobId, walletAddress, walletAddress], (err, results) => {
+    if (err) {
+      console.error("Error fetching job:", err);
+      return res.status(500).send("Error fetching job.");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("Job not found.");
+    }
+
+    res.status(200).json(results[0]);
+  });
+};
+
+// Add a new job
+exports.addJob = (req, res) => {
+  const { client, freelancer, amount, blockNumber, transactionHash, status } = req.body;
+
   if (!client) {
     return res.status(400).send("Client wallet address is required.");
   }
 
-  const query = `INSERT INTO jobs (client, freelancer, amount, blockNumber, transactionHash) VALUES (?, ?, ?, ?, ?)`;
+  const query = `
+    INSERT INTO jobs (client, freelancer, amount, blockNumber, transactionHash, status)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
 
-  db.query(query, [client, freelancer, amount, blockNumber, transactionHash], (err, result) => {
-    if (err) {
-      console.error("Error inserting job:", err);
-      res.status(500).send("Error saving job data.");
-    } else {
-      res.status(201).send({ jobId: result.insertId, message: "Job data saved successfully." });
+  db.query(
+    query,
+    [client, freelancer, amount, blockNumber, transactionHash, status || "Pending"],
+    (err, result) => {
+      if (err) {
+        console.error("Error inserting job:", err);
+        return res.status(500).send("Error saving job data.");
+      }
+
+      res.status(201).send({ jobId: result.insertId, message: "Job added successfully." });
     }
-  });
+  );
 };
 
-exports.addJobDetails = (req, res) => {
-  const { jobId, jobTitle, description, status } = req.body;
+// Add or update job details
+exports.addOrUpdateJobDetails = (req, res) => {
+  const { jobId, title, description } = req.body;
 
-  // Check if jobId exists in jobs table
-  const jobCheckQuery = "SELECT jobId FROM jobs WHERE jobId = ?";
-  db.query(jobCheckQuery, [jobId], (err, results) => {
+  if (!jobId || !title || !description) {
+    return res.status(400).send("Job ID, title, and description are required.");
+  }
+
+  // Check if job details already exist
+  const checkQuery = "SELECT job_details_id FROM job_details WHERE job_id = ?";
+  db.query(checkQuery, [jobId], (err, results) => {
     if (err) {
-      console.error("Error checking job ID:", err);
-      return res.status(500).send("Error checking job ID.");
+      console.error("Error checking job details:", err);
+      return res.status(500).send("Error checking job details.");
     }
 
-    if (results.length === 0) {
-      return res.status(400).send("Invalid jobId: Job does not exist.");
-    }
-
-    // Check if jobId already has a record in job_details
-    const detailsCheckQuery = "SELECT jobId FROM job_details WHERE jobId = ?";
-    db.query(detailsCheckQuery, [jobId], (err, results) => {
-      if (err) {
-        console.error("Error checking job details:", err);
-        return res.status(500).send("Error checking job details.");
-      }
-
-      if (results.length > 0) {
-        return res.status(400).send("Job details already exist for this jobId.");
-      }
-
-      // Insert into job_details
-      const insertQuery = `
-        INSERT INTO job_details (jobId, jobTitle, description, status, filePath)
-        VALUES (?, ?, ?, ?, NULL)
+    if (results.length > 0) {
+      // Update existing job details
+      const updateQuery = `
+        UPDATE job_details
+        SET title = ?, description = ?
+        WHERE job_id = ?
       `;
-      db.query(insertQuery, [jobId, jobTitle, description, status], (err) => {
+      db.query(updateQuery, [title, description, jobId], (err) => {
+        if (err) {
+          console.error("Error updating job details:", err);
+          return res.status(500).send("Error updating job details.");
+        }
+
+        res.status(200).send("Job details updated successfully.");
+      });
+    } else {
+      // Insert new job details
+      const insertQuery = `
+        INSERT INTO job_details (job_id, title, description)
+        VALUES (?, ?, ?)
+      `;
+      db.query(insertQuery, [jobId, title, description], (err) => {
         if (err) {
           console.error("Error inserting job details:", err);
           return res.status(500).send("Error saving job details.");
         }
 
-        res.status(201).send("Job details saved successfully.");
+        res.status(201).send("Job details added successfully.");
       });
+    }
+  });
+};
+
+// Fetch job details by job ID
+exports.getJobDetails = (req, res) => {
+  const { jobId } = req.params;
+
+  const query = `SELECT * FROM job_details WHERE job_id = ?`;
+  db.query(query, [jobId], (err, results) => {
+    if (err) {
+      console.error("Error fetching job details:", err);
+      return res.status(500).send("Error fetching job details.");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("Job details not found.");
+    }
+
+    res.status(200).json(results[0]);
+  });
+};
+
+// Update job details
+exports.updateJobDetails = (req, res) => {
+  const { jobId, jobTitle, description, status } = req.body;
+
+  const checkQuery = "SELECT job_id FROM job_details WHERE job_id = ?";
+  db.query(checkQuery, [jobId], (err, results) => {
+    if (err) {
+      console.error("Error checking job details:", err);
+      return res.status(500).send("Error checking job details.");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("Job details not found.");
+    }
+
+    const updateQuery = `
+      UPDATE job_details
+      SET title = ?, description = ?, status = ?
+      WHERE job_id = ?
+    `;
+    db.query(updateQuery, [jobTitle, description, status, jobId], (err) => {
+      if (err) {
+        console.error("Error updating job details:", err);
+        return res.status(500).send("Error updating job details.");
+      }
+
+      res.status(200).send("Job details updated successfully.");
     });
-  });
-};
-exports.getJobsByClient = (req, res) => {
-  const clientId = req.user.id; // Get the logged-in user's ID from the token
-
-  const query = `SELECT * FROM jobs WHERE client = ?`;
-  db.query(query, [clientId], (err, results) => {
-    if (err) {
-      console.error("Error fetching jobs by client:", err);
-      res.status(500).send("Error fetching jobs by client.");
-    } else {
-      res.status(200).json(results);
-    }
-  });
-};
-
-exports.getJobsByFreelancer = (req, res) => {
-  const freelancerId = req.user.id; // Get the logged-in user's ID from the token
-
-  const query = `SELECT * FROM jobs WHERE freelancer = ?`;
-  db.query(query, [freelancerId], (err, results) => {
-    if (err) {
-      console.error("Error fetching jobs by freelancer:", err);
-      res.status(500).send("Error fetching jobs by freelancer.");
-    } else {
-      res.status(200).json(results);
-    }
   });
 };
 
@@ -185,54 +258,5 @@ exports.getUserVotes = (req, res) => {
     } else {
       res.status(200).json(results);
     }
-  });
-};
-exports.getJobDetails = (req, res) => {
-  const { jobId } = req.params;
-
-  // Query to fetch job details
-  const query = `SELECT * FROM job_details WHERE jobId = ?`;
-  db.query(query, [jobId], (err, results) => {
-    if (err) {
-      console.error("Error fetching job details:", err);
-      return res.status(500).send("Error fetching job details.");
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send("Job details not found.");
-    }
-
-    res.status(200).json(results[0]); // Return the job details
-  });
-};
-exports.updateJobDetails = (req, res) => {
-  const { jobId, jobTitle, description, status } = req.body;
-
-  // Check if jobId exists in job_details
-  const checkQuery = "SELECT jobId FROM job_details WHERE jobId = ?";
-  db.query(checkQuery, [jobId], (err, results) => {
-    if (err) {
-      console.error("Error checking job details:", err);
-      return res.status(500).send("Error checking job details.");
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send("Job details not found.");
-    }
-
-    // Update job details
-    const updateQuery = `
-      UPDATE job_details
-      SET jobTitle = ?, description = ?, status = ?
-      WHERE jobId = ?
-    `;
-    db.query(updateQuery, [jobTitle, description, status, jobId], (err) => {
-      if (err) {
-        console.error("Error updating job details:", err);
-        return res.status(500).send("Error updating job details.");
-      }
-
-      res.status(200).send("Job details updated successfully.");
-    });
   });
 };

@@ -12,6 +12,8 @@ function JobListDB({ account, filter }) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [jobDetails, setJobDetails] = useState(null);
 
+  const token = localStorage.getItem("token"); // Retrieve the token once
+
   // Function to close the modal
   const handleCloseModal = () => {
     setShowModal(false);
@@ -23,6 +25,19 @@ function JobListDB({ account, filter }) {
     setShowDetailsModal(false);
     setJobDetails(null); // Reset the job details
   };
+
+  // Function to handle adding job details
+  const handleAddDetails = (jobId) => {
+    setSelectedJobId(jobId); // Set the selected job ID
+    setShowModal(true); // Open the modal
+  };
+
+  // Function to handle editing job details
+  const handleEditDetails = (jobId) => {
+    setSelectedJobId(jobId); // Set the selected job ID
+    setShowModal(true); // Open the modal
+  };
+
   // Fetch jobs from the API
   const fetchJobs = async () => {
     setLoading(true);
@@ -33,14 +48,13 @@ function JobListDB({ account, filter }) {
     }
 
     try {
-      const token = localStorage.getItem("token");
       if (!token) {
         console.error("No token found in localStorage");
         setLoading(false);
         return;
       }
 
-            console.log("Headers being sent:", {
+      console.log("Headers being sent:", {
         Authorization: `Bearer ${token}`,
         "Wallet-Address": account,
       });
@@ -60,7 +74,7 @@ function JobListDB({ account, filter }) {
         jobsData.map(async (job) => {
           try {
             const detailsResponse = await axios.get(
-              `${config.API_BASE_URL}/api/jobs/details/${job.jobId}`,
+              `${config.API_BASE_URL}/api/jobs/details/${job.job_id}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -69,7 +83,7 @@ function JobListDB({ account, filter }) {
             );
             return { ...job, hasDetails: true, details: detailsResponse.data };
           } catch (error) {
-            console.warn(`No details found for jobId: ${job.jobId}`);
+            console.warn(`No details found for jobId: ${job.job_id}`);
             return { ...job, hasDetails: false };
           }
         })
@@ -111,26 +125,24 @@ function JobListDB({ account, filter }) {
             <th>Client</th>
             <th>Freelancer</th>
             <th>Amount</th>
-            <th>Block Number</th>
-            <th>Transaction Hash</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {jobs.map((job, index) => (
-            <tr key={job.id || job.jobId}>
+            <tr key={job.job_id}>
               <td>{index + 1}</td>
-              <td>{job.id || job.jobId}</td>
+              <td>{job.job_id}</td>
               <td>{job.client}</td>
               <td>{job.freelancer}</td>
               <td>{job.amount}</td>
-              <td>{job.blockNumber}</td>
-              <td>{job.transactionHash}</td>
+              <td>{job.status}</td>
               <td>
                 {job.hasDetails ? (
                   <Button
                     variant="warning"
-                    onClick={() => handleEditDetails(job.id || job.jobId)}
+                    onClick={() => handleEditDetails(job.job_id)}
                     className="me-2"
                   >
                     Edit Details
@@ -138,7 +150,7 @@ function JobListDB({ account, filter }) {
                 ) : (
                   <Button
                     variant="info"
-                    onClick={() => handleAddDetails(job.id || job.jobId)}
+                    onClick={() => handleAddDetails(job.job_id)}
                     className="me-2"
                   >
                     Add Details
@@ -147,7 +159,7 @@ function JobListDB({ account, filter }) {
                 {job.hasDetails && (
                   <Button
                     variant="success"
-                    onClick={() => handleShowDetails(job.id || job.jobId)}
+                    onClick={() => setShowDetailsModal(true) || setJobDetails(job.details)}
                   >
                     Show Details
                   </Button>
@@ -164,7 +176,7 @@ function JobListDB({ account, filter }) {
           <Modal.Title>{selectedJobId ? "Edit Job Details" : "Add Job Details"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <AddJobDetailsForm jobId={selectedJobId} />
+          <AddJobDetailsForm jobId={selectedJobId} token={token} account={account} />
         </Modal.Body>
       </Modal>
 
@@ -176,9 +188,8 @@ function JobListDB({ account, filter }) {
         <Modal.Body>
           {jobDetails ? (
             <div>
-              <p><strong>Job Title:</strong> {jobDetails.jobTitle}</p>
+              <p><strong>Job Title:</strong> {jobDetails.title}</p>
               <p><strong>Description:</strong> {jobDetails.description}</p>
-              <p><strong>Status:</strong> {jobDetails.status}</p>
             </div>
           ) : (
             <p>Loading job details...</p>

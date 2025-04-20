@@ -5,8 +5,6 @@ import AuthForm from "./components/AuthForm";
 import CreateJobForm from "./components/CreateJobForm";
 import JobListDB from "./components/JobListDB";
 import JobList from "./components/JobList";
-import JobListClient from "./components/JobListClient";
-import JobListFreelance from "./components/JobListFreelance";
 import VoteableJobs from "./components/VoteableJobs";
 
 function App() {
@@ -122,20 +120,6 @@ function App() {
                   <JobListDB account={account} filter={filter} />
                   <h3>Jobs on Smart Contract</h3>
                   <JobList account={account} filter={filter} />
-                </Col>
-              </Row>
-            </Tab>
-            <Tab eventKey="clientJobs" title="Client Jobs">
-              <Row>
-                <Col md={12}>
-                  <JobListClient account={account} />
-                </Col>
-              </Row>
-            </Tab>
-            <Tab eventKey="freelancerJobs" title="Freelancer Jobs">
-              <Row>
-                <Col md={12}>
-                  <JobListFreelance account={account} />
                 </Col>
               </Row>
             </Tab>
