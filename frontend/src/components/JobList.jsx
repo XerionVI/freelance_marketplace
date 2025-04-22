@@ -22,9 +22,22 @@ function JobList({ account, filter }) {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Mapping for job status
+  const statusMapping = {
+    0: "Created",
+    1: "Completed",
+    2: "Approved",
+  };
+
   const fetchJobs = async () => {
     setLoading(true);
     try {
+      if (!account) {
+        console.error("Wallet not connected.");
+        setLoading(false);
+        return;
+      }
+
       const contract = await getFreelanceEscrowContract(account);
       if (!contract) {
         console.error("Contract not initialized.");
@@ -32,17 +45,27 @@ function JobList({ account, filter }) {
         return;
       }
 
+      console.log("Fetching job IDs...");
       const jobIds = await contract.getAllJobIds();
-      const jobs = [];
+      console.log("Job IDs fetched:", jobIds);
 
+      if (!jobIds || jobIds.length === 0) {
+        console.warn("No job IDs found.");
+        setJobs([]);
+        setLoading(false);
+        return;
+      }
+
+      const jobs = [];
       for (const jobId of jobIds) {
+        console.log(`Fetching details for job ID: ${jobId}`);
         const job = await contract.jobs(jobId);
         jobs.push({
           jobId: jobId.toString(),
           client: job.client,
           freelancer: job.freelancer,
           amount: ethers.formatEther(job.amount),
-          status: job.status,
+          status: job.status, // Status as integer from the contract
         });
       }
 
@@ -55,7 +78,9 @@ function JobList({ account, filter }) {
   };
 
   useEffect(() => {
-    fetchJobs();
+    if (account) {
+      fetchJobs();
+    }
   }, [account]);
 
   useEffect(() => {
@@ -76,6 +101,14 @@ function JobList({ account, filter }) {
   const handleAddressClick = (address) => {
     setSelectedAddress(address);
   };
+
+  if (!account) {
+    return (
+      <Alert severity="warning" sx={{ mt: 3 }}>
+        Please connect your wallet to view jobs.
+      </Alert>
+    );
+  }
 
   if (loading) {
     return (
@@ -132,7 +165,7 @@ function JobList({ account, filter }) {
                 </Button>
               </TableCell>
               <TableCell>{job.amount}</TableCell>
-              <TableCell>{job.status}</TableCell>
+              <TableCell>{statusMapping[job.status] || "Unknown"}</TableCell>
             </TableRow>
           ))}
         </TableBody>

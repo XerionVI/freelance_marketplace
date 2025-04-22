@@ -18,6 +18,8 @@ import {
 import axios from "axios";
 import config from "../config";
 import NotesModal from "./NotesModal"; // Import the NotesModal component
+import { ethers } from "ethers";
+import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
 
 function JobDetailsPage({ account, token }) {
   const { jobId } = useParams();
@@ -149,6 +151,42 @@ function JobDetailsPage({ account, token }) {
     }
   };
 
+  const handleCompleteJob = async () => {
+    setIsLoading(true);
+    setMessage("");
+    try {
+      const contract = await getFreelanceEscrowContract(account);
+      const tx = await contract.completeJob(jobId);
+      await tx.wait();
+      setMessage("Job marked as completed successfully!");
+    } catch (error) {
+      console.error("Error completing job:", error);
+      setMessage("Error completing job. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApproveJob = async (jobId) => {
+    setIsLoading(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum); // Use BrowserProvider
+      const signer = await provider.getSigner(); // Get the signer from the connected wallet
+      const contract = new ethers.Contract(contractAddress, FreelanceEscrowABI, signer);
+  
+      console.log("Approving job with ID:", jobId);
+      const tx = await contract.approveJob(jobId); // Call the approveJob function
+      await tx.wait(); // Wait for the transaction to be mined
+  
+      alert("Job approved and payment released successfully!");
+    } catch (error) {
+      console.error("Error approving job:", error);
+      alert("Error approving job. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ textAlign: "center", mt: 4 }}>
@@ -174,7 +212,32 @@ function JobDetailsPage({ account, token }) {
         <Typography variant="body1"><strong>Job Title:</strong> {jobDetails.jobTitle || "N/A"}</Typography>
         <Typography variant="body1"><strong>Description:</strong> {jobDetails.description || "N/A"}</Typography>
       </Box>
-
+      {/* Buttons for Complete and Approve Job */}
+      <Box sx={{ mt: 4 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleCompleteJob}
+          disabled={isLoading}
+          sx={{ mr: 2 }}
+        >
+          {isLoading ? <CircularProgress size={24} /> : "Complete Job"}
+        </Button>
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleApproveJob}
+          disabled={isLoading}
+        >
+          {isLoading ? <CircularProgress size={24} /> : "Approve Job"}
+        </Button>
+      </Box>
+      {/* Display Success or Error Message */}
+      {message && (
+        <Alert severity={message.includes("Error") ? "error" : "success"} sx={{ mt: 3 }}>
+          {message}
+        </Alert>
+      )}
       <Typography variant="h5" gutterBottom>
         Uploaded Files
       </Typography>

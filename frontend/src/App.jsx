@@ -8,6 +8,7 @@ import JobList from "./components/JobList";
 import VoteableJobs from "./components/VoteableJobs";
 import JobDetailsPage from "./components/JobDetailsPage"; // Import the JobDetailsPage component
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import listenForJobCreated from "./utils/listenForJobCreated"; // Import the utility function
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -22,15 +23,27 @@ function App() {
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+          console.log("Connected account:", accounts[0]);
           setAccount(accounts[0]); // Set the first account as the connected wallet
+
+          // Start listening for JobCreated events after wallet is connected
+          listenForJobCreated(accounts[0]);
+
+          // Handle account changes
           window.ethereum.on("accountsChanged", (accounts) => {
+            console.log("Account changed:", accounts[0]);
             setAccount(accounts[0] || null); // Update the account when it changes
+
+            // Restart event listener for the new account
+            if (accounts[0]) {
+              listenForJobCreated(accounts[0]);
+            }
           });
         } catch (error) {
-          alert("Error connecting to MetaMask.");
+          console.error("Error connecting to MetaMask:", error);
         }
       } else {
-        alert("MetaMask is not installed.");
+        console.error("MetaMask is not installed.");
       }
     };
 
