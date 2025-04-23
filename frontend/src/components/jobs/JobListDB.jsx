@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import AddJobDetailsForm from "./AddJobDetailsForm"; // Ensure this component is imported
 import axios from "axios";
-import config from "../config";
+import config from "../../config";
 import { useNavigate } from "react-router-dom";
 
 function JobListDB({ account, filter }) {
@@ -147,32 +147,43 @@ function JobListDB({ account, filter }) {
                 <TableCell>{job.amount}</TableCell>
                 <TableCell>{job.status}</TableCell>
                 <TableCell>
-                  {job.hasDetails ? (
-                    <Button
-                      variant="outlined"
-                      color="warning"
-                      onClick={() => handleEditDetails(job.job_id)}
-                      sx={{ mr: 1 }}
-                    >
-                      Edit Details
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      color="info"
-                      onClick={() => handleAddDetails(job.job_id)}
-                      sx={{ mr: 1 }}
-                    >
-                      Add Details
-                    </Button>
+                  {/* Show Details button accessible by both client and freelancer */}
+                  {(job.client.toLowerCase() === account.toLowerCase() ||
+                    job.freelancer.toLowerCase() === account.toLowerCase()) && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => handleShowDetails(job.job_id)}
+                        sx={{ mr: 1 }}
+                      >
+                        Show Details
+                      </Button>
+                    )}
+
+                  {/* Add/Edit Details buttons accessible only by the client */}
+                  {job.client.toLowerCase() === account.toLowerCase() && (
+                    <>
+                      {job.hasDetails ? (
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          onClick={() => handleEditDetails(job.job_id)}
+                          sx={{ mr: 1 }}
+                        >
+                          Edit Details
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outlined"
+                          color="info"
+                          onClick={() => handleAddDetails(job.job_id)}
+                          sx={{ mr: 1 }}
+                        >
+                          Add Details
+                        </Button>
+                      )}
+                    </>
                   )}
-                  <Button
-                    variant="contained"
-                    color="success"
-                    onClick={() => handleShowDetails(job.job_id)}
-                  >
-                    Show Details
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}

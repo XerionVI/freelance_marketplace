@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 import { Box, TextField, Button, Alert, Typography, CircularProgress } from "@mui/material";
-import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
-import config from "../config";
+import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
+import config from "../../config";
 
 function CreateJobForm({ account, onJobCreated }) {
   const [freelancerAddress, setFreelancerAddress] = useState("");

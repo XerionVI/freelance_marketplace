@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -14,15 +14,18 @@ import {
   CircularProgress,
   Paper,
   TextField,
+  Card,
+  CardContent,
 } from "@mui/material";
 import axios from "axios";
-import config from "../config";
-import NotesModal from "./NotesModal"; // Import the NotesModal component
+import config from "../../config";
+import NotesModal from "../files/NotesModal"; // Import the NotesModal component
 import { ethers } from "ethers";
-import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
+import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
 
 function JobDetailsPage({ account, token }) {
   const { jobId } = useParams();
+  const navigate = useNavigate();
   const [jobDetails, setJobDetails] = useState(null);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
@@ -32,6 +35,7 @@ function JobDetailsPage({ account, token }) {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -167,24 +171,27 @@ function JobDetailsPage({ account, token }) {
     }
   };
 
-  const handleApproveJob = async (jobId) => {
+  const handleApproveJob = async () => {
     setIsLoading(true);
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum); // Use BrowserProvider
-      const signer = await provider.getSigner(); // Get the signer from the connected wallet
-      const contract = new ethers.Contract(contractAddress, FreelanceEscrowABI, signer);
-  
-      console.log("Approving job with ID:", jobId);
-      const tx = await contract.approveJob(jobId); // Call the approveJob function
-      await tx.wait(); // Wait for the transaction to be mined
-  
-      alert("Job approved and payment released successfully!");
+      const contract = await getFreelanceEscrowContract(account);
+      const tx = await contract.approveJob(jobId);
+      await tx.wait();
+      setMessage("Job approved and payment released successfully!");
     } catch (error) {
       console.error("Error approving job:", error);
-      alert("Error approving job. Please try again.");
+      setMessage("Error approving job. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePreviewFile = (fileUrl) => {
+    setPreviewFile(fileUrl); // Set the file URL to preview
+  };
+
+  const closePreview = () => {
+    setPreviewFile(null); // Close the preview
   };
 
   if (isLoading) {
@@ -200,26 +207,53 @@ function JobDetailsPage({ account, token }) {
 
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Job Details
-      </Typography>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="body1"><strong>Job ID:</strong> {jobDetails.job_id}</Typography>
-        <Typography variant="body1"><strong>Client:</strong> {jobDetails.client}</Typography>
-        <Typography variant="body1"><strong>Freelancer:</strong> {jobDetails.freelancer}</Typography>
-        <Typography variant="body1"><strong>Amount:</strong> {jobDetails.amount} ETH</Typography>
-        <Typography variant="body1"><strong>Status:</strong> {jobDetails.status}</Typography>
-        <Typography variant="body1"><strong>Job Title:</strong> {jobDetails.jobTitle || "N/A"}</Typography>
-        <Typography variant="body1"><strong>Description:</strong> {jobDetails.description || "N/A"}</Typography>
-      </Box>
+      {/* Back Button */}
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3 }}
+      >
+        Back
+      </Button>
+
+      {/* Job Details Card */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h4" gutterBottom>
+            Job Details
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Job ID:</strong> {jobDetails.job_id}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Client:</strong> {jobDetails.client}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Freelancer:</strong> {jobDetails.freelancer}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Amount:</strong> {jobDetails.amount} ETH
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Status:</strong> {jobDetails.status}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Job Title:</strong> {jobDetails.jobTitle || "N/A"}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Description:</strong> {jobDetails.description || "N/A"}
+          </Typography>
+        </CardContent>
+      </Card>
+
       {/* Buttons for Complete and Approve Job */}
-      <Box sx={{ mt: 4 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
         <Button
           variant="contained"
           color="primary"
           onClick={handleCompleteJob}
           disabled={isLoading}
-          sx={{ mr: 2 }}
         >
           {isLoading ? <CircularProgress size={24} /> : "Complete Job"}
         </Button>
@@ -232,59 +266,76 @@ function JobDetailsPage({ account, token }) {
           {isLoading ? <CircularProgress size={24} /> : "Approve Job"}
         </Button>
       </Box>
-      {/* Display Success or Error Message */}
-      {message && (
-        <Alert severity={message.includes("Error") ? "error" : "success"} sx={{ mt: 3 }}>
-          {message}
-        </Alert>
-      )}
-      <Typography variant="h5" gutterBottom>
-        Uploaded Files
-      </Typography>
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>File Name</TableCell>
-              <TableCell>Uploaded By</TableCell>
-              <TableCell>Uploaded At</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {jobFiles.map((file, index) => (
-              <TableRow key={file.file_id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{file.file_name}</TableCell>
-                <TableCell>{file.uploaded_by}</TableCell>
-                <TableCell>{new Date(file.uploaded_at).toLocaleString()}</TableCell>
-                <TableCell>
-                  <Button variant="outlined" color="primary" onClick={() => handleShowNotes(file.file_id)}>
-                    View Notes
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
 
-      <Typography variant="h5" gutterBottom>
-        Upload File
-      </Typography>
-      {message && <Alert severity="info" sx={{ mb: 2 }}>{message}</Alert>}
-      <Box component="form" onSubmit={handleFileUpload} sx={{ mb: 4 }}>
-        <TextField
-          type="file"
-          fullWidth
-          onChange={(e) => setFile(e.target.files[0])}
-          sx={{ mb: 2 }}
-        />
-        <Button variant="contained" color="primary" type="submit">
-          Upload File
-        </Button>
-      </Box>
+      {/* Uploaded Files Section */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h5" gutterBottom>
+            Uploaded Files
+          </Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>File Name</TableCell>
+                  <TableCell>Uploaded By</TableCell>
+                  <TableCell>Uploaded At</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {jobFiles.map((file, index) => (
+                  <TableRow key={file.file_id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{file.file_name}</TableCell>
+                    <TableCell>{file.uploaded_by}</TableCell>
+                    <TableCell>{new Date(file.uploaded_at).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => handleShowNotes(file.file_id)}
+                        sx={{ mr: 1 }}
+                      >
+                        View Notes
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => handlePreviewFile(file.file_url, file.file_name)}
+                      >
+                        Preview
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+
+      {/* Upload File Section */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h5" gutterBottom>
+            Upload File
+          </Typography>
+          {message && <Alert severity="info" sx={{ mb: 2 }}>{message}</Alert>}
+          <Box component="form" onSubmit={handleFileUpload}>
+            <TextField
+              type="file"
+              fullWidth
+              onChange={(e) => setFile(e.target.files[0])}
+              sx={{ mb: 2 }}
+            />
+            <Button variant="contained" color="primary" type="submit">
+              Upload File
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Notes Modal */}
       <NotesModal
@@ -295,7 +346,23 @@ function JobDetailsPage({ account, token }) {
         setNewNote={setNewNote}
         handleAddNote={handleAddNote}
       />
+
+      {previewFile && (
+        <Modal open={Boolean(previewFile)} onClose={closePreview}>
+          <Box sx={{ p: 4, backgroundColor: 'white', maxWidth: '80%', margin: 'auto' }}>
+            {previewFile.endsWith('.pdf') ? (
+              <iframe src={previewFile} width="100%" height="500px" title="File Preview"></iframe>
+            ) : (
+              <img src={previewFile} alt="Preview" style={{ maxWidth: '100%' }} />
+            )}
+            <Button onClick={closePreview} sx={{ mt: 2 }}>
+              Close
+            </Button>
+          </Box>
+        </Modal>
+      )}
     </Box>
+
   );
 }
 

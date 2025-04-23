@@ -13,8 +13,8 @@ import {
   Alert,
 } from "@mui/material";
 import { ethers } from "ethers";
-import { getFreelanceEscrowContract } from "../utils/getFreelanceEscrow";
-import AddressDetails from "./AddressDetails";
+import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
+import AddressDetails from "../files/AddressDetails";
 
 function JobList({ account, filter }) {
   const [jobs, setJobs] = useState([]);

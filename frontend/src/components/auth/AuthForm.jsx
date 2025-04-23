@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button, Alert } from "react-bootstrap";
 import axios from "axios";
-import config from "../config";
+import config from "../../config";
 
 
 function AuthForm({ isLogin, onAuthSuccess }) {

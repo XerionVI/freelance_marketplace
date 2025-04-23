@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Container, Box, Typography, Tabs, Tab, Button, Alert, Grid } from "@mui/material";
 import axios from "axios";
-import AuthForm from "./components/AuthForm";
-import CreateJobForm from "./components/CreateJobForm";
-import JobListDB from "./components/JobListDB";
-import JobList from "./components/JobList";
-import VoteableJobs from "./components/VoteableJobs";
-import JobDetailsPage from "./components/JobDetailsPage"; // Import the JobDetailsPage component
+import AuthForm from "./components/auth/AuthForm";
+import CreateJobForm from "./components/jobs/CreateJobForm";
+import JobListDB from "./components/jobs/JobListDB";
+import JobList from "./components/jobs/JobList";
+import VoteableJobs from "./components/disputes/VoteableJobs";
+import JobDetailsPage from "./components/jobs/JobDetailsPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import listenForJobCreated from "./utils/listenForJobCreated"; // Import the utility function
+import listenForJobCreated from "./utils/listenForJobCreated";
+import Layout from "./components/shared/layout/Layout"; // Import Layout
 
 function App() {
   const [account, setAccount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All Jobs");
-  const [token, setToken] = useState(localStorage.getItem("token")); // Load token from localStorage
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [username, setUsername] = useState(null);
   const [tabValue, setTabValue] = useState("displayJobs");
 
@@ -24,17 +25,14 @@ function App() {
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
           console.log("Connected account:", accounts[0]);
-          setAccount(accounts[0]); // Set the first account as the connected wallet
+          setAccount(accounts[0]);
 
-          // Start listening for JobCreated events after wallet is connected
           listenForJobCreated(accounts[0]);
 
-          // Handle account changes
           window.ethereum.on("accountsChanged", (accounts) => {
             console.log("Account changed:", accounts[0]);
-            setAccount(accounts[0] || null); // Update the account when it changes
+            setAccount(accounts[0] || null);
 
-            // Restart event listener for the new account
             if (accounts[0]) {
               listenForJobCreated(accounts[0]);
             }
@@ -60,7 +58,7 @@ function App() {
     } catch (error) {
       console.error("Error fetching username:", error);
       if (error.response && error.response.status === 401) {
-        handleLogout(); // Log the user out if the token is invalid
+        handleLogout();
       }
     }
   };
@@ -72,21 +70,15 @@ function App() {
   }, [account, token]);
 
   const handleAuthSuccess = (token) => {
-    localStorage.setItem("token", token); // Save the token in localStorage
+    localStorage.setItem("token", token);
     setToken(token);
     fetchUsername();
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove the token from localStorage
+    localStorage.removeItem("token");
     setToken(null);
     setUsername(null);
-  };
-
-  const handleJobCreated = (jobData) => {
-    console.log("Job created:", jobData);
-    alert(`Job "${jobData.title}" has been successfully created!`);
-    // Add additional logic here to update the UI if needed
   };
 
   const handleTabChange = (event, newValue) => {
@@ -95,26 +87,7 @@ function App() {
 
   return (
     <Router>
-      <Container maxWidth="lg" sx={{ mt: 5 }}>
-        <Typography variant="h3" align="center" gutterBottom>
-          Freelance Marketplace
-        </Typography>
-
-        <Box sx={{ mb: 4 }}>
-          {account ? (
-            <Alert severity="info">
-              Connected as {account}
-              {username && (
-                <Typography variant="body1">
-                  Logged in as: <strong>{username}</strong>
-                </Typography>
-              )}
-            </Alert>
-          ) : (
-            <Alert severity="warning">Please connect to MetaMask.</Alert>
-          )}
-        </Box>
-
+      <Layout account={account} onLogout={handleLogout}>
         {!token ? (
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
@@ -126,16 +99,10 @@ function App() {
           </Grid>
         ) : (
           <Routes>
-            {/* Main Tabs */}
             <Route
               path="/"
               element={
                 <>
-                  <Box sx={{ textAlign: "right", mb: 3 }}>
-                    <Button variant="contained" color="error" onClick={handleLogout}>
-                      Logout
-                    </Button>
-                  </Box>
                   <Tabs
                     value={tabValue}
                     onChange={handleTabChange}
@@ -152,7 +119,7 @@ function App() {
                   {tabValue === "createJob" && (
                     <Grid container justifyContent="center">
                       <Grid item xs={12} md={8}>
-                        <CreateJobForm account={account} onJobCreated={handleJobCreated} />
+                        <CreateJobForm account={account} />
                       </Grid>
                     </Grid>
                   )}
@@ -180,15 +147,13 @@ function App() {
                 </>
               }
             />
-
-            {/* Job Details Page */}
             <Route
               path="/job-details/:jobId"
               element={<JobDetailsPage account={account} token={token} />}
             />
           </Routes>
         )}
-      </Container>
+      </Layout>
     </Router>
   );
 }
