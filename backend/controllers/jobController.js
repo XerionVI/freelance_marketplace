@@ -162,6 +162,38 @@ exports.getJobDetails = (req, res) => {
   });
 };
 
+// Update job status
+exports.updateJobStatus = (req, res) => {
+  const { jobId } = req.params; // Get job ID from the request parameters
+  const { status } = req.body; // Get the new status from the request body
+
+  // Validate input
+  if (!jobId || !status) {
+    return res.status(400).send("Job ID and status are required.");
+  }
+
+  // Validate the status value
+  const validStatuses = ["Pending", "Accepted", "Completed", "Disputed", "Declined"];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).send("Invalid status value.");
+  }
+
+  // Update the job status in the database
+  const query = `UPDATE jobs SET status = ? WHERE job_id = ?`;
+  db.query(query, [status, jobId], (err, result) => {
+    if (err) {
+      console.error("Error updating job status:", err);
+      return res.status(500).send("Error updating job status.");
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Job not found.");
+    }
+
+    res.status(200).send({ message: "Job status updated successfully." });
+  });
+};
+
 // Update job details
 exports.updateJobDetails = (req, res) => {
   const { jobId, jobTitle, description, status } = req.body;

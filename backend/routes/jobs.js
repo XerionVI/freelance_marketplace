@@ -15,6 +15,8 @@ router.post("/", authMiddleware, jobController.addJob);
 
 // Add or update job details
 router.post("/details", authMiddleware, jobController.addOrUpdateJobDetails);
+router.patch("/:jobId", jobController.updateJobStatus);
+
 router.post("/mark-voteable", authMiddleware, jobController.markJobAsVoteable);
 router.get("/voteable", authMiddleware, jobController.getVoteableJobs);
 router.post("/vote", authMiddleware, jobController.voteForJob);
