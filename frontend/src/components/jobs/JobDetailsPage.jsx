@@ -14,6 +14,8 @@ import JobDetails from "./JobDetails";
 import UploadedFiles from "./UploadedFiles";
 import UploadFileSection from "./UploadFileSection";
 import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
+import { ethers } from "ethers";
+import FreelanceEscrowABI from "../../abi/FreelanceEscrowABI";
 
 function JobDetailsPage({ account, token }) {
   const { jobId } = useParams();
@@ -148,7 +150,43 @@ function JobDetailsPage({ account, token }) {
       console.error("Error accepting job:", error);
     }
   };
+
+  const handleCompleteJob = async () => {
+    setIsLoading(true);
+    setMessage("");
+    try {
+      const contract = await getFreelanceEscrowContract(account);
+      const tx = await contract.completeJob(jobId);
+      await tx.wait();
+      setMessage("Job marked as completed successfully!");
+    } catch (error) {
+      console.error("Error completing job:", error);
+      setMessage("Error completing job. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApproveJob = async () => {
+    setIsLoading(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum); // Use BrowserProvider
+      const signer = await provider.getSigner(); // Get the signer from the connected wallet
+      const contract = new ethers.Contract(config.CONTRACT_ADDRESS, FreelanceEscrowABI, signer);
   
+      console.log("Approving job with ID:", jobId);
+      const tx = await contract.approveJob(jobId); // Call the approveJob function
+      await tx.wait(); // Wait for the transaction to be mined
+  
+      alert("Job approved and payment released successfully!");
+    } catch (error) {
+      console.error("Error approving job:", error);
+      alert("Error approving job. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeclineJob = async () => {
     try {
       const response = await axios.patch(
@@ -167,6 +205,35 @@ function JobDetailsPage({ account, token }) {
       }
     } catch (error) {
       console.error("Error declining job:", error);
+    }
+  };
+
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+
+    const addedBy = account === jobDetails.client ? "Client" : "Freelancer";
+
+    try {
+      const response = await axios.post(
+        `${config.API_BASE_URL}/api/notes/${selectedFileId}`,
+        { note: newNote, addedBy },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setNotes((prevNotes) => [
+          ...prevNotes,
+          { note: newNote, added_by: addedBy, added_at: new Date() },
+        ]);
+        setNewNote("");
+      }
+    } catch (error) {
+      console.error("Error adding note:", error);
     }
   };
 
@@ -217,6 +284,8 @@ function JobDetailsPage({ account, token }) {
       {jobDetails.status === "Accepted" && (
         <>
           <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+          {/* Show "Complete Job" button if the logged-in account is the freelancer */}
+          {account.toLowerCase() === jobDetails.freelancer.toLowerCase() && (
             <Button
               variant="contained"
               color="primary"
@@ -225,6 +294,10 @@ function JobDetailsPage({ account, token }) {
             >
               {isLoading ? <CircularProgress size={24} /> : "Complete Job"}
             </Button>
+          )}
+
+          {/* Show "Approve Job" button if the logged-in account is the client */}
+          {account.toLowerCase() === jobDetails.client.toLowerCase() && (
             <Button
               variant="contained"
               color="success"
@@ -233,7 +306,8 @@ function JobDetailsPage({ account, token }) {
             >
               {isLoading ? <CircularProgress size={24} /> : "Approve Job"}
             </Button>
-          </Box>
+          )}
+        </Box>
 
           <UploadedFiles
             jobFiles={jobFiles}

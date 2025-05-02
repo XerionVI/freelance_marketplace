@@ -8,6 +8,9 @@ import {
   TableBody,
   Button,
   Paper,
+  Card,
+  CardContent,
+  Typography
 } from "@mui/material";
 
 const UploadedFiles = ({ jobFiles, handleShowNotes, handlePreviewFile }) => {

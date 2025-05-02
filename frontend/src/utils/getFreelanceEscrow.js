@@ -1,7 +1,11 @@
 import { ethers } from "ethers";
 import FreelanceEscrowABI from "../abi/FreelanceEscrowABI";  // Ensure correct path
+import config from "../config";  // Ensure correct path
 
-const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";  // Example address
+
+const CONTRACT_ADDRESS = config.CONTRACT_ADDRESS;
+
+
 
 export async function getFreelanceEscrowContract(account) {
   // Ensure window.ethereum is available (MetaMask)
