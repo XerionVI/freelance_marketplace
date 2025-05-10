@@ -25,8 +25,10 @@ function JobList({ account, filter }) {
   // Mapping for job status
   const statusMapping = {
     0: "Created",
-    1: "Completed",
-    2: "Approved",
+    1: "Accepted",
+    2: "Declined",
+    3: "Completed",
+    4: "Approved",
   };
 
   const fetchJobs = async () => {
@@ -97,6 +99,47 @@ function JobList({ account, filter }) {
           );
     setFilteredJobs(filtered);
   }, [jobs, filter, account]);
+
+  // Add event listeners for contract events
+  useEffect(() => {
+    let contract;
+
+    const setupEventListeners = async () => {
+      if (!account) return;
+
+      contract = await getFreelanceEscrowContract(account);
+      if (!contract) return;
+
+      // Listen for JobCreated event
+      contract.on("JobCreated", (jobId, client, freelancer, amount) => {
+        console.log("JobCreated event detected:", { jobId, client, freelancer, amount });
+        fetchJobs(); // Fetch updated job list
+      });
+
+      // Listen for JobCompleted event
+      contract.on("JobCompleted", (jobId, freelancer) => {
+        console.log("JobCompleted event detected:", { jobId, freelancer });
+        fetchJobs(); // Fetch updated job list
+      });
+
+      // Listen for JobApproved event
+      contract.on("JobApproved", (jobId, client) => {
+        console.log("JobApproved event detected:", { jobId, client });
+        fetchJobs(); // Fetch updated job list
+      });
+    };
+
+    setupEventListeners();
+
+    // Clean up event listeners on component unmount
+    return () => {
+      if (contract) {
+        contract.removeAllListeners("JobCreated");
+        contract.removeAllListeners("JobCompleted");
+        contract.removeAllListeners("JobApproved");
+      }
+    };
+  }, [account]);
 
   const handleAddressClick = (address) => {
     setSelectedAddress(address);

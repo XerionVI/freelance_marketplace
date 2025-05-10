@@ -12,99 +12,112 @@ function CreateJobForm({ account, onJobCreated }) {
   const [error, setError] = useState("");
 
   const handleCreateJob = async () => {
-    const contract = await getFreelanceEscrowContract(account);
-    if (!contract) return;
+  const contract = await getFreelanceEscrowContract(account);
+  console.log("Contract address:", contract.target || contract.address);
+  if (!contract) return;
 
-    setIsLoading(true);
-    setMessage("");
-    setError("");
+  setIsLoading(true);
+  setMessage("");
+  setError("");
 
-    try {
-      // Validate inputs
-      if (!ethers.isAddress(freelancerAddress)) {
-        setError("Invalid freelancer address.");
+  try {
+    // Validate inputs
+    if (!ethers.isAddress(freelancerAddress)) {
+      setError("Invalid freelancer address.");
+      setIsLoading(false);
+      return;
+    }
+    if (isNaN(deposit) || parseFloat(deposit) <= 0) {
+      setError("Deposit amount must be a positive number.");
+      setIsLoading(false);
+      return;
+    }
+
+    // 1. Create the job on the blockchain
+    const tx = await contract.createJob(freelancerAddress, {
+      value: ethers.parseEther(deposit),
+    });
+
+    const receipt = await tx.wait();
+    console.log("Transaction receipt:", receipt);
+
+    // 2. Fetch the JobCreated event from the transaction receipt
+    const eventFilter = contract.filters.JobCreated();
+    const events = await contract.queryFilter(eventFilter, receipt.blockNumber, "latest");
+
+    console.log("Events found:", events);
+
+    if (events.length > 0) {
+      const { jobId, client, freelancer, amount } = events[0].args;
+      const contractJobId = Number(jobId);
+
+      // 3. Double-check: Ensure the jobId exists on the contract
+      const allJobIds = await contract.getAllJobIds();
+      const jobIdExists = allJobIds.map(id => Number(id)).includes(contractJobId);
+
+      if (!jobIdExists) {
+        setError("Job ID from contract does not exist. Aborting save.");
         setIsLoading(false);
         return;
       }
-      if (isNaN(deposit) || parseFloat(deposit) <= 0) {
-        setError("Deposit amount must be a positive number.");
+
+      // 4. Prepare job data for the backend
+      const jobData = {
+        contractJobId, // on-chain job ID
+        client: account,
+        freelancer,
+        amount: ethers.formatEther(amount),
+        blockNumber: events[0].blockNumber,
+        transactionHash: events[0].transactionHash,
+        status: "Pending",
+      };
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found in localStorage");
+        setMessage("Failed to save job: User is not authenticated.");
         setIsLoading(false);
         return;
       }
 
-      // Create the job on the blockchain
-      const tx = await contract.createJob(freelancerAddress, {
-        value: ethers.parseEther(deposit),
+      // 5. Save the job to the database
+      const response = await fetch(`${config.API_BASE_URL}/api/jobs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(jobData),
       });
 
-      const receipt = await tx.wait();
-      console.log("Transaction receipt:", receipt);
-
-      // Fetch the JobCreated event from the transaction receipt
-      const eventFilter = contract.filters.JobCreated();
-      const events = await contract.queryFilter(eventFilter, receipt.blockNumber, "latest");
-
-      console.log("Events found:", events);
-
-      if (events.length > 0) {
-        const { jobId, client, freelancer, amount } = events[0].args;
-
-        // Prepare job data for the backend
-        const jobData = {
-          client: account, // Use the currently logged-in wallet address
-          freelancer,
-          amount: ethers.formatEther(amount),
-          blockNumber: events[0].blockNumber,
-          transactionHash: events[0].transactionHash,
-          status: "Pending", // Default status
-        };
-
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("No token found in localStorage");
-          setMessage("Failed to save job: User is not authenticated.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Save the job to the database
-        const response = await fetch(`${config.API_BASE_URL}/api/jobs`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-          },
-          body: JSON.stringify(jobData),
-        });
-
-        if (response.ok) {
-          const responseData = await response.json();
-          console.log("Job saved to database with jobId:", responseData.jobId);
-          setMessage(`Job created and saved! Job ID: ${responseData.jobId}`);
-          jobData.jobId = responseData.jobId;
-        } else {
-          console.error("Error saving job to database.");
-          setMessage("Job created but failed to save to database.");
-        }
-
-        // Notify parent component if onJobCreated is provided
-        if (typeof onJobCreated === "function") {
-          console.log("Calling onJobCreated with jobData:", jobData);
-          onJobCreated(jobData);
-        } else {
-          console.warn("onJobCreated is not a function.");
-        }
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("Job saved to database with jobId:", responseData.jobId);
+        setMessage(`Job created and saved! Job ID: ${responseData.jobId}`);
+        jobData.jobId = responseData.jobId;
       } else {
-        console.error("No JobCreated event found.");
-        setMessage("Job creation succeeded, but no event found.");
+        console.error("Error saving job to database.");
+        setMessage("Job created but failed to save to database.");
       }
-    } catch (error) {
-      console.error("Error creating job:", error);
-      setError("Job creation failed. Check console for details.");
-    } finally {
-      setIsLoading(false);
+
+      // Notify parent component if onJobCreated is provided
+      if (typeof onJobCreated === "function") {
+        console.log("Calling onJobCreated with jobData:", jobData);
+        onJobCreated(jobData);
+      } else {
+        console.warn("onJobCreated is not a function.");
+      }
+    } else {
+      console.error("No JobCreated event found.");
+      setMessage("Job creation succeeded, but no event found.");
     }
-  };
+  } catch (error) {
+    console.error("Error creating job:", error);
+    setError("Job creation failed. Check console for details.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, p: 3, border: "1px solid #ccc", borderRadius: 2 }}>

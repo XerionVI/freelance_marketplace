@@ -130,6 +130,7 @@ function JobListDB({ account, filter }) {
             <TableRow>
               <TableCell>#</TableCell>
               <TableCell>Job ID</TableCell>
+              <TableCell>Contract Job ID</TableCell>
               <TableCell>Client</TableCell>
               <TableCell>Freelancer</TableCell>
               <TableCell>Amount (ETH)</TableCell>
@@ -142,6 +143,7 @@ function JobListDB({ account, filter }) {
               <TableRow key={job.job_id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{job.job_id}</TableCell>
+                <TableCell>{job.contractJobId ?? "-"}</TableCell> {/* Show dash if missing */}
                 <TableCell>{job.client}</TableCell>
                 <TableCell>{job.freelancer}</TableCell>
                 <TableCell>{job.amount}</TableCell>

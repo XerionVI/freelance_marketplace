@@ -32,6 +32,9 @@ function JobDetailsPage({ account, token }) {
   const [previewFile, setPreviewFile] = useState(null);
   console.log("Account on job page:", account);
 
+  const normalizedAccount = ethers.getAddress(account);
+  console.log("Normalized Account on job page:", normalizedAccount);
+
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
@@ -42,8 +45,14 @@ function JobDetailsPage({ account, token }) {
           },
         });
 
-        if (response.status === 200) {
-          setJobDetails(response.data);
+         if (response.status === 200) {
+          // Normalize client and freelancer addresses in job details
+          const normalizedJobDetails = {
+            ...response.data,
+            client: ethers.getAddress(response.data.client),
+            freelancer: ethers.getAddress(response.data.freelancer),
+          };
+          setJobDetails(normalizedJobDetails);
         }
       } catch (error) {
         console.error("Error fetching job details:", error);
@@ -57,7 +66,7 @@ function JobDetailsPage({ account, token }) {
         const response = await axios.get(`${config.API_BASE_URL}/api/files/${jobId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Wallet-Address": account,
+            "Wallet-Address": normalizedAccount,
           },
         });
 
@@ -71,7 +80,7 @@ function JobDetailsPage({ account, token }) {
 
     fetchJobDetails();
     fetchJobFiles();
-  }, [jobId, account, token]);
+  }, [jobId, normalizedAccount, token]);
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
@@ -131,83 +140,115 @@ function JobDetailsPage({ account, token }) {
   };
 
    const handleAcceptJob = async () => {
-    try {
-      const response = await axios.patch(
-        `${config.API_BASE_URL}/api/jobs/${jobId}`,
-        { status: "Accepted" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Wallet-Address": account,
-          },
-        }
-      );
-  
-      if (response.status === 200) {
-        setJobDetails((prevDetails) => ({ ...prevDetails, status: "Accepted" }));
+  setIsLoading(true);
+  try {
+    const contract = await getFreelanceEscrowContract(normalizedAccount);
+    const contractJobId = jobDetails.contractJobId;
+    // Call contract to set status to Accepted
+    const tx = await contract.acceptJob(contractJobId);
+    await tx.wait();
+
+    // Update status in the database
+    const response = await axios.patch(
+      `${config.API_BASE_URL}/api/jobs/${jobId}`,
+      { status: "Accepted" },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Wallet-Address": account,
+        },
       }
-    } catch (error) {
-      console.error("Error accepting job:", error);
+    );
+    if (response.status === 200) {
+      setJobDetails((prevDetails) => ({ ...prevDetails, status: "Accepted" }));
     }
-  };
+  } catch (error) {
+    console.error("Error accepting job:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleDeclineJob = async () => {
+  setIsLoading(true);
+  try {
+    const contract = await getFreelanceEscrowContract(normalizedAccount);
+    const contractJobId = jobDetails.contractJobId;
+    // Call contract to set status to Declined
+    const tx = await contract.declineJob(contractJobId);
+    await tx.wait();
+
+    // Update status in the database
+    const response = await axios.patch(
+      `${config.API_BASE_URL}/api/jobs/${jobId}`,
+      { status: "Declined" },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Wallet-Address": account,
+        },
+      }
+    );
+    if (response.status === 200) {
+      setJobDetails((prevDetails) => ({ ...prevDetails, status: "Declined" }));
+    }
+  } catch (error) {
+    console.error("Error declining job:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleCompleteJob = async () => {
-    setIsLoading(true);
-    setMessage("");
-    try {
-      const contract = await getFreelanceEscrowContract(account);
-      const tx = await contract.completeJob(jobId);
-      await tx.wait();
-      setMessage("Job marked as completed successfully!");
-    } catch (error) {
-      console.error("Error completing job:", error);
-      setMessage("Error completing job. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setIsLoading(true);
+  setMessage("");
+  try {
+    const contract = await getFreelanceEscrowContract(normalizedAccount);
+    // Use contractJobId for contract call
+    const contractJobId = jobDetails.contractJobId;
+    const jobOnChain = await contract.getJobDetails(contractJobId);
+    console.log("Stored freelancer:", jobOnChain.freelancer);
+    console.log("Your address:", normalizedAccount);
+    console.log("Match?", jobOnChain.freelancer.toLowerCase() === account.toLowerCase());
+    const tx = await contract.completeJob(contractJobId);
+    await tx.wait();
+    setMessage("Job marked as completed successfully!");
+  } catch (error) {
+    console.error("Error completing job:", error);
+    setMessage("Error completing job. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleApproveJob = async () => {
-    setIsLoading(true);
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum); // Use BrowserProvider
-      const signer = await provider.getSigner(); // Get the signer from the connected wallet
-      const contract = new ethers.Contract(config.CONTRACT_ADDRESS, FreelanceEscrowABI, signer);
-  
-      console.log("Approving job with ID:", jobId);
-      const tx = await contract.approveJob(jobId); // Call the approveJob function
-      await tx.wait(); // Wait for the transaction to be mined
-  
-      alert("Job approved and payment released successfully!");
-    } catch (error) {
-      console.error("Error approving job:", error);
-      alert("Error approving job. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setIsLoading(true);
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const balanceBefore = await provider.getBalance(jobDetails.freelancer);
+    console.log("Freelancer balance before:", ethers.formatEther(balanceBefore));
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(config.CONTRACT_ADDRESS, FreelanceEscrowABI, signer);
 
-  const handleDeclineJob = async () => {
-    try {
-      const response = await axios.patch(
-        `${config.API_BASE_URL}/api/jobs/${jobId}`,
-        { status: "Declined" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Wallet-Address": account,
-          },
-        }
-      );
-  
-      if (response.status === 200) {
-        setJobDetails((prevDetails) => ({ ...prevDetails, status: "Declined" }));
-      }
-    } catch (error) {
-      console.error("Error declining job:", error);
-    }
-  };
+    // Use contractJobId for contract call
+    const contractJobId = jobDetails.contractJobId;
+    console.log("Approving job with contractJobId:", contractJobId);
+    const tx = await contract.approveJob(contractJobId);
+    await tx.wait();
+    const receipt = await tx.wait();
+    console.log("approve Recipt: ", receipt);
 
+    const balanceAfter = await provider.getBalance(jobDetails.freelancer);
+    console.log("Freelancer balance after:", ethers.formatEther(balanceAfter));
+
+    alert("Job approved and payment released successfully!");
+  } catch (error) {
+    console.error("Error approving job:", error);
+    alert("Error approving job. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -285,7 +326,7 @@ function JobDetailsPage({ account, token }) {
         <>
           <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
           {/* Show "Complete Job" button if the logged-in account is the freelancer */}
-          {account.toLowerCase() === jobDetails.freelancer.toLowerCase() && (
+          {normalizedAccount.toLowerCase() === jobDetails.freelancer.toLowerCase() && (
             <Button
               variant="contained"
               color="primary"
@@ -297,7 +338,7 @@ function JobDetailsPage({ account, token }) {
           )}
 
           {/* Show "Approve Job" button if the logged-in account is the client */}
-          {account.toLowerCase() === jobDetails.client.toLowerCase() && (
+          {normalizedAccount.toLowerCase() === jobDetails.client.toLowerCase() && (
             <Button
               variant="contained"
               color="success"

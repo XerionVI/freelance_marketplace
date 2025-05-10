@@ -30,6 +30,9 @@ const JobDetails = ({ jobDetails }) => {
           <strong>Job ID:</strong> {jobDetails.job_id}
         </Typography>
         <Typography variant="body1" sx={{ mb: 1 }}>
+          <strong>Contract Job ID:</strong> {jobDetails.contractJobId ?? "-"}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
           <strong>Client:</strong> {jobDetails.client}
         </Typography>
         <Typography variant="body1" sx={{ mb: 1 }}>

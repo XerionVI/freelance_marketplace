@@ -9,7 +9,8 @@ import VoteableJobs from "./components/disputes/VoteableJobs";
 import JobDetailsPage from "./components/jobs/JobDetailsPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import listenForJobCreated from "./utils/listenForJobCreated";
-import Layout from "./components/shared/layout/Layout"; // Import Layout
+import Layout from "./components/shared/layout/Layout";
+import { ethers } from "ethers"; // Import ethers for address normalization
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -24,17 +25,21 @@ function App() {
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-          console.log("Connected account:", accounts[0]);
-          setAccount(accounts[0]);
+          const normalizedAccount = ethers.getAddress(accounts[0]); // Normalize the account
+          console.log("Connected account (normalized):", normalizedAccount);
+          setAccount(normalizedAccount);
 
-          listenForJobCreated(accounts[0]);
+          listenForJobCreated(normalizedAccount);
 
           window.ethereum.on("accountsChanged", (accounts) => {
-            console.log("Account changed:", accounts[0]);
-            setAccount(accounts[0] || null);
-
-            if (accounts[0]) {
-              listenForJobCreated(accounts[0]);
+            if (accounts.length > 0) {
+              const normalizedChangedAccount = ethers.getAddress(accounts[0]); // Normalize the changed account
+              console.log("Account changed (normalized):", normalizedChangedAccount);
+              setAccount(normalizedChangedAccount);
+              listenForJobCreated(normalizedChangedAccount);
+            } else {
+              console.log("No accounts connected.");
+              setAccount(null);
             }
           });
         } catch (error) {

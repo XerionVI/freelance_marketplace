@@ -12,14 +12,13 @@ const db = mysql.createConnection({
 
 // Fetch all jobs for the logged-in wallet address
 exports.getJobs = (req, res) => {
-  const walletAddress = req.headers["wallet-address"]; // Use lowercase header name
-
+  const walletAddress = req.headers["wallet-address"];
   if (!walletAddress) {
     return res.status(400).send("Wallet address is required.");
   }
 
   const query = `
-    SELECT j.job_id, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
+    SELECT j.job_id, j.contractJobId, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
            jd.title AS jobTitle, jd.description AS jobDescription
     FROM jobs j
     LEFT JOIN job_details jd ON j.job_id = jd.job_id
@@ -31,7 +30,6 @@ exports.getJobs = (req, res) => {
       console.error("Error fetching jobs:", err);
       return res.status(500).send("Error fetching jobs.");
     }
-
     res.status(200).json(results);
   });
 };
@@ -46,7 +44,7 @@ exports.getJobById = (req, res) => {
   }
 
   const query = `
-    SELECT j.job_id, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
+    SELECT j.job_id, j.contractJobId, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
            jd.title AS jobTitle, jd.description
     FROM jobs j
     LEFT JOIN job_details jd ON j.job_id = jd.job_id
@@ -67,29 +65,43 @@ exports.getJobById = (req, res) => {
   });
 };
 
-// Add a new job
 exports.addJob = (req, res) => {
-  const { client, freelancer, amount, blockNumber, transactionHash, status } = req.body;
+  const { contractJobId, client, freelancer, amount, blockNumber, transactionHash, status } = req.body;
 
+  if (typeof contractJobId !== "number" || isNaN(contractJobId)) {
+    return res.status(400).send("Valid contractJobId is required.");
+  }
   if (!client) {
     return res.status(400).send("Client wallet address is required.");
   }
 
   const query = `
-    INSERT INTO jobs (client, freelancer, amount, blockNumber, transactionHash, status)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO jobs (contractJobId, client, freelancer, amount, blockNumber, transactionHash, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(
     query,
-    [client, freelancer, amount, blockNumber, transactionHash, status || "Pending"],
+    [
+      contractJobId,
+      client,
+      freelancer,
+      amount,
+      blockNumber,
+      transactionHash,
+      status || "Pending"
+    ],
     (err, result) => {
       if (err) {
         console.error("Error inserting job:", err);
         return res.status(500).send("Error saving job data.");
       }
 
-      res.status(201).send({ jobId: result.insertId, message: "Job added successfully." });
+      res.status(201).send({
+        jobId: result.insertId,
+        contractJobId,
+        message: "Job added successfully."
+      });
     }
   );
 };
