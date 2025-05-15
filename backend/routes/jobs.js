@@ -17,10 +17,7 @@ router.post("/", authMiddleware, jobController.addJob);
 router.post("/details", authMiddleware, jobController.addOrUpdateJobDetails);
 router.patch("/:jobId", jobController.updateJobStatus);
 
-router.post("/mark-voteable", authMiddleware, jobController.markJobAsVoteable);
-router.get("/voteable", authMiddleware, jobController.getVoteableJobs);
-router.post("/vote", authMiddleware, jobController.voteForJob);
-router.get("/votes", authMiddleware, jobController.getUserVotes);
+// Fetch job details by job ID
 router.get("/details/:jobId", authMiddleware, jobController.getJobDetails);
 router.put("/details", authMiddleware, jobController.updateJobDetails);
 

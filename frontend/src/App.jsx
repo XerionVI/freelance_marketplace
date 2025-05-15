@@ -5,7 +5,7 @@ import AuthForm from "./components/auth/AuthForm";
 import CreateJobForm from "./components/jobs/CreateJobForm";
 import JobListDB from "./components/jobs/JobListDB";
 import JobList from "./components/jobs/JobList";
-import VoteableJobs from "./components/disputes/VoteableJobs";
+import DisputeHome from "./components/disputes/DisputeHome";
 import JobDetailsPage from "./components/jobs/JobDetailsPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import listenForJobCreated from "./utils/listenForJobCreated";
@@ -118,7 +118,7 @@ function App() {
                   >
                     <Tab label="Create Job" value="createJob" />
                     <Tab label="Display Jobs" value="displayJobs" />
-                    <Tab label="Voteable Jobs" value="voteableJobs" />
+                    <Tab label="Voteable Disputes" value="voteableJobs" /> {/* Renamed for clarity */}
                   </Tabs>
 
                   {tabValue === "createJob" && (
@@ -145,7 +145,7 @@ function App() {
                   {tabValue === "voteableJobs" && (
                     <Grid container>
                       <Grid item xs={12}>
-                        <VoteableJobs />
+                        <DisputeHome account={account} />
                       </Grid>
                     </Grid>
                   )}
