@@ -13,10 +13,20 @@ const db = mysql.createConnection({
 // Create a new dispute
 exports.createDispute = (req, res) => {
   const { jobId, client, freelancer, description } = req.body;
+  console.log("Creating dispute with data:", { jobId, client, freelancer, description });
   const query = `INSERT INTO disputes (job_id, client, freelancer, description, resolved) VALUES (?, ?, ?, ?, 0)`;
   db.query(query, [jobId, client, freelancer, description], (err, result) => {
     if (err) return res.status(500).send("Error creating dispute.");
     res.status(200).json({ disputeId: result.insertId, jobId, client, freelancer, description, resolved: false });
+  });
+};
+
+// Get all disputes (regardless of status)
+exports.getAllDisputes = (req, res) => {
+  const query = `SELECT * FROM disputes ORDER BY dispute_id DESC`;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).send("Error fetching all disputes.");
+    res.status(200).json(results);
   });
 };
 
@@ -58,5 +68,21 @@ exports.getVoteableDisputes = (req, res) => {
   db.query(query, (err, results) => {
     if (err) return res.status(500).send("Error fetching disputes.");
     res.status(200).json(results);
+  });
+};
+
+// Enable voting for a dispute (set resolved = 0)
+exports.enableVoting = (req, res) => {
+  const { disputeId } = req.params;
+  const query = `UPDATE disputes SET resolved = 0 WHERE dispute_id = ?`;
+  db.query(query, [disputeId], (err, result) => {
+    if (err) {
+      console.error("Error enabling voting:", err);
+      return res.status(500).send("Error enabling voting.");
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Dispute not found.");
+    }
+    res.status(200).send({ message: "Voting enabled for this dispute." });
   });
 };

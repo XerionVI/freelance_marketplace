@@ -212,7 +212,7 @@ function JobDetailsPage({ account, token }) {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Wallet-Address": account,
+            "Wallet-Address": normalizedAccount,
           },
         }
       );
@@ -290,7 +290,7 @@ function JobDetailsPage({ account, token }) {
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Wallet-Address": account,
+          "Wallet-Address": normalizedAccount,
         },
       });
 
