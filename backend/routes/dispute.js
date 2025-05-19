@@ -7,7 +7,7 @@ const auth = require("../middleware/authMiddleware");
 router.post("/", auth, disputeController.createDispute);
 
 // Get all disputes
-router.get("/", disputeController.getAllDisputes);
+router.get("/", auth, disputeController.getAllDisputes);
 
 // Get a dispute by contractJobId (for a job)
 router.get("/job/:contractJobId", auth, disputeController.getDisputeByContractJobId);
@@ -21,6 +21,7 @@ router.get("/:disputeId", auth, disputeController.getDisputeById);
 // Get all voteable disputes
 router.get("/voteable", disputeController.getVoteableDisputes);
 
+// Get a dispute by its disputeId
 router.post("/enable-voting/:disputeId", disputeController.enableVoting);
 
 module.exports = router;

@@ -64,10 +64,11 @@ exports.getDisputeById = (req, res) => {
 
 // disputeController.js
 exports.getVoteableDisputes = (req, res) => {
-  const query = `SELECT * FROM disputes WHERE resolved = 0`;
+  const query = `SELECT * FROM disputes WHERE resolved = 0 ORDER BY dispute_id DESC`;
   db.query(query, (err, results) => {
     if (err) return res.status(500).send("Error fetching disputes.");
     res.status(200).json(results);
+    console.log("Voteable disputes:", results);
   });
 };
 
