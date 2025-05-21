@@ -118,7 +118,7 @@ function App() {
                   >
                     <Tab label="Create Job" value="createJob" />
                     <Tab label="Display Jobs" value="displayJobs" />
-                    <Tab label="Voteable Disputes" value="voteableJobs" /> {/* Renamed for clarity */}
+                    <Tab label="Disputes" value="disputes" /> {/* Renamed for clarity */}
                   </Tabs>
 
                   {tabValue === "createJob" && (
@@ -142,7 +142,7 @@ function App() {
                     </Grid>
                   )}
 
-                  {tabValue === "voteableJobs" && (
+                  {tabValue === "disputes" && (
                     <Grid container>
                       <Grid item xs={12}>
                         <DisputeHome account={account} />

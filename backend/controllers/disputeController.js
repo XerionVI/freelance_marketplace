@@ -30,6 +30,16 @@ exports.getAllDisputes = (req, res) => {
   });
 };
 
+exports.getVoteableDisputes = (req, res) => {
+  const query = `SELECT * FROM disputes WHERE resolved = 0 ORDER BY dispute_id DESC`;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).send("Error fetching disputes.");
+    res.status(200).json(results);
+    console.log("Voteable disputes:", results);
+  });
+};
+
+
 // Get a dispute by contractJobId
 exports.getDisputeByContractJobId = (req, res) => {
   const { contractJobId } = req.params;
@@ -62,13 +72,18 @@ exports.getDisputeById = (req, res) => {
   });
 };
 
-// disputeController.js
-exports.getVoteableDisputes = (req, res) => {
-  const query = `SELECT * FROM disputes WHERE resolved = 0 ORDER BY dispute_id DESC`;
-  db.query(query, (err, results) => {
-    if (err) return res.status(500).send("Error fetching disputes.");
-    res.status(200).json(results);
-    console.log("Voteable disputes:", results);
+exports.markDisputeResolved = (req, res) => {
+  const { disputeId } = req.params;
+  const query = `UPDATE disputes SET resolved = 1 WHERE dispute_id = ?`;
+  db.query(query, [disputeId], (err, result) => {
+    if (err) {
+      console.error("Error marking dispute as resolved:", err);
+      return res.status(500).send("Error updating dispute.");
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Dispute not found.");
+    }
+    res.status(200).send({ message: "Dispute marked as resolved." });
   });
 };
 

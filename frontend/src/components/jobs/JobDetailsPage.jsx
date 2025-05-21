@@ -277,23 +277,54 @@ function JobDetailsPage({ account, token }) {
     }
   };
 
-  const handleRaiseDispute = async () => {
+    const handleRaiseDispute = async () => {
     try {
       const description = prompt("Describe the reason for the dispute:");
       if (!description) return;
-
+  
+      // 1. Call the smart contract to raise the dispute
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(
+        config.CONTRACT_ADDRESS, // FreelanceEscrow contract address
+        FreelanceEscrowABI,
+        signer
+      );
+      // Call the contract function (adjust if your function signature is different)
+      const tx = await contract.initiateDispute(jobDetails.contractJobId, description);
+      const receipt = await tx.wait();
+  
+      // Get the disputeId from the event logs (assuming event DisputeInitiated(jobId, disputeId))
+      let disputeId = null;
+      for (const log of receipt.logs) {
+        try {
+          const parsed = contract.interface.parseLog(log);
+          if (parsed.name === "DisputeInitiated") {
+            disputeId = parsed.args.disputeId.toString();
+            break;
+          }
+        } catch (e) {}
+      }
+  
+      if (!disputeId) {
+        alert("Dispute raised on-chain, but could not get disputeId from event.");
+        return;
+      }
+  
+      // 2. Save the dispute in your backend/database
       const response = await axios.post(`${config.API_BASE_URL}/api/disputes`, {
         jobId: jobDetails.contractJobId,
         client: jobDetails.client,
         freelancer: jobDetails.freelancer,
         description,
+        disputeId, // Save the on-chain disputeId for mapping
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Wallet-Address": normalizedAccount,
         },
       });
-
+  
       if (response.status === 200) {
         alert("Dispute raised successfully!");
         setDispute(response.data);

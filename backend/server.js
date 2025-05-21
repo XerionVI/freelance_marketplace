@@ -49,13 +49,14 @@ const voteRoutes = require("./routes/vote");
 app.use("/api/votes", voteRoutes);
 
 // Import dispute routes
-const disputeRoutes = require("./routes/dispute");
+const disputeRoutes = require("./routes/disputes");
 app.use("/api/disputes", disputeRoutes);
 
 // Serve React frontend for other routes (this must come last)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
+
 
 // Start the server
 const PORT = 5000;

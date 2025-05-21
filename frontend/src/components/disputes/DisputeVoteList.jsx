@@ -4,6 +4,9 @@ import { ethers } from "ethers";
 import VotingDisputeResolutionABI from "../../abi/VotingDisputeResolutionABI";
 import config from "../../config";
 import axios from "axios";
+import FreelanceEscrowABI from "../../abi/FreelanceEscrowABI";
+
+const ADMIN_ADDRESS = config.ADMIN_ADDRESS;
 
 function DisputeVoteList({ account }) {
   const [disputes, setDisputes] = useState([]);
@@ -13,16 +16,16 @@ function DisputeVoteList({ account }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedDispute, setSelectedDispute] = useState(null);
   const [voteStats, setVoteStats] = useState({ votesForClient: 0, votesForFreelancer: 0 });
+  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     const fetchDisputes = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        console.log("token", token);
-const response = await axios.get(`${config.API_BASE_URL}/api/disputes/voteable`, {
-  headers: { Authorization: `Bearer ${token}` },
-});
+        const response = await axios.get(`${config.API_BASE_URL}/api/disputes/voteable`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setDisputes(response.data);
       } catch (err) {
         setDisputes([]);
@@ -107,8 +110,42 @@ const response = await axios.get(`${config.API_BASE_URL}/api/disputes/voteable`,
     setVoting((prev) => ({ ...prev, [disputeId]: false }));
   };
 
+    const handleResolveDispute = async (disputeId) => {
+    setResolving(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const escrowContract = new ethers.Contract(
+        config.CONTRACT_ADDRESS,
+        FreelanceEscrowABI,
+        signer
+      );
+      const tx = await escrowContract.resolveDispute(disputeId);
+      await tx.wait();
+  
+      // Call backend to mark as resolved
+      await axios.patch(
+        `${config.API_BASE_URL}/api/disputes/mark-resolved/${disputeId}`
+      );
+  
+      alert("Dispute resolved!");
+      setDisputes((prev) =>
+        prev.map((d) =>
+          d.dispute_id === disputeId ? { ...d, resolved: 1 } : d
+        )
+      );
+      setShowModal(false);
+    } catch (err) {
+      alert("Error resolving dispute. See console for details.");
+      console.error(err);
+    }
+    setResolving(false);
+  };
+
   if (loading) return <p>Loading voteable disputes...</p>;
   if (disputes.length === 0) return <p>No voteable disputes found.</p>;
+
+  const isAdmin = account && account.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
 
   return (
     <div className="table-responsive">
@@ -182,31 +219,47 @@ const response = await axios.get(`${config.API_BASE_URL}/api/disputes/voteable`,
                 }%
               </p>
               {!selectedDispute.resolved && (
-                votedStatus[selectedDispute.dispute_id] ? (
-                  <p className="text-info">You have already voted.</p>
-                ) : (
-                  <>
-                    <Button
-                      variant="success"
-                      className="me-2"
-                      onClick={() => castVote(selectedDispute.dispute_id, true)}
-                      disabled={voting[selectedDispute.dispute_id]}
-                    >
-                      {voting[selectedDispute.dispute_id] ? <Spinner size="sm" /> : "Vote Client"}
-                    </Button>
-                    <Button
-                      variant="primary"
-                      onClick={() => castVote(selectedDispute.dispute_id, false)}
-                      disabled={voting[selectedDispute.dispute_id]}
-                    >
-                      {voting[selectedDispute.dispute_id] ? <Spinner size="sm" /> : "Vote Freelancer"}
-                    </Button>
-                  </>
-                )
+                <>
+                  {votedStatus[selectedDispute.dispute_id] ? (
+                    <p className="text-info">You have already voted.</p>
+                  ) : (
+                    <div>
+                      <Button
+                        variant="success"
+                        className="me-2 mb-2"
+                        onClick={() => castVote(selectedDispute.dispute_id, true)}
+                        disabled={voting[selectedDispute.dispute_id]}
+                      >
+                        {voting[selectedDispute.dispute_id] ? <Spinner size="sm" /> : "Vote Client"}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="mb-2"
+                        onClick={() => castVote(selectedDispute.dispute_id, false)}
+                        disabled={voting[selectedDispute.dispute_id]}
+                      >
+                        {voting[selectedDispute.dispute_id] ? <Spinner size="sm" /> : "Vote Freelancer"}
+                      </Button>
+                    </div>
+                  )}
+                  {/* Admin-only resolve button at the bottom */}
+                  {isAdmin && (
+                    <div className="d-grid mt-3">
+                      <Button
+                        variant="danger"
+                        onClick={() => handleResolveDispute(selectedDispute.dispute_id)}
+                        disabled={resolving}
+                      >
+                        {resolving ? <Spinner size="sm" /> : "End Voting & Resolve"}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Close
