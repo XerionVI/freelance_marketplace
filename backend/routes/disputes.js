@@ -25,7 +25,10 @@ router.get("/:disputeId", auth, disputeController.getDisputeById);
 // Get a dispute by its disputeId
 router.post("/enable-voting/:disputeId", disputeController.enableVoting);
 
+// Mark a dispute as resolved
 router.patch("/mark-resolved/:disputeId", disputeController.markDisputeResolved);
 
+// Update arguments for a dispute
+router.patch("/arguments/:disputeId", disputeController.updateDisputeArguments);
 
 module.exports = router;

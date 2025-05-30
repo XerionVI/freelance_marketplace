@@ -16,6 +16,8 @@ import UploadFileSection from "./UploadFileSection";
 import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
 import { ethers } from "ethers";
 import FreelanceEscrowABI from "../../abi/FreelanceEscrowABI";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 function JobDetailsPage({ account, token }) {
   const { jobId } = useParams();
@@ -31,12 +33,13 @@ function JobDetailsPage({ account, token }) {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [dispute, setDispute] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "error" });
 
   console.log("Account on job page:", account);
 
-  const normalizedAccount = ethers.getAddress(account);
+  const normalizedAccount = account ? ethers.getAddress(account) : "";
   console.log("Normalized Account on job page:", normalizedAccount);
-
+  // Fetch job details and files on mount/jobId change
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
@@ -48,11 +51,11 @@ function JobDetailsPage({ account, token }) {
         });
 
         if (response.status === 200) {
-          // Normalize client and freelancer addresses in job details
+          const { client, freelancer, ...rest } = response.data;
           const normalizedJobDetails = {
-            ...response.data,
-            client: ethers.getAddress(response.data.client),
-            freelancer: ethers.getAddress(response.data.freelancer),
+            ...rest,
+            client: client ? ethers.getAddress(client) : "",
+            freelancer: freelancer ? ethers.getAddress(freelancer) : "",
           };
           setJobDetails(normalizedJobDetails);
         }
@@ -68,7 +71,7 @@ function JobDetailsPage({ account, token }) {
         const response = await axios.get(`${config.API_BASE_URL}/api/files/${jobId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Wallet-Address": normalizedAccount,
+            "Wallet-Address": account,
           },
         });
 
@@ -80,9 +83,18 @@ function JobDetailsPage({ account, token }) {
       }
     };
 
+    fetchJobDetails();
+    fetchJobFiles();
+  }, [jobId, account, token]);
+
+  // Fetch dispute only after jobDetails is loaded and has contractJobId
+  useEffect(() => {
     const fetchDispute = async () => {
+      if (!jobDetails || !jobDetails.contractJobId) {
+        setDispute(null);
+        return;
+      }
       try {
-        // To fetch a dispute for a job
         const response = await axios.get(`${config.API_BASE_URL}/api/disputes/job/${jobDetails.contractJobId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -99,13 +111,9 @@ function JobDetailsPage({ account, token }) {
       }
     };
 
-    if (jobDetails && jobDetails.contractJobId) {
-      fetchDispute();
-    }
+    fetchDispute();
+  }, [jobDetails, account, token]);
 
-    fetchJobDetails();
-    fetchJobFiles();
-  }, [jobId, normalizedAccount, token]);
 
 
 
@@ -171,7 +179,6 @@ function JobDetailsPage({ account, token }) {
     try {
       const contract = await getFreelanceEscrowContract(normalizedAccount);
       const contractJobId = jobDetails.contractJobId;
-      // Call contract to set status to Accepted
       const tx = await contract.acceptJob(contractJobId);
       await tx.wait();
 
@@ -188,9 +195,21 @@ function JobDetailsPage({ account, token }) {
       );
       if (response.status === 200) {
         setJobDetails((prevDetails) => ({ ...prevDetails, status: "Accepted" }));
+        setSnackbar({ open: true, message: "Job accepted successfully!", severity: "success" });
       }
     } catch (error) {
       console.error("Error accepting job:", error);
+      let errorMsg = "Error accepting job. Please try again.";
+      if (error && error.message) {
+        if (error.shortMessage) {
+          errorMsg = error.shortMessage;
+        } else if (error.info && error.info.error && error.info.error.message) {
+          errorMsg = error.info.error.message;
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setSnackbar({ open: true, message: errorMsg, severity: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +220,6 @@ function JobDetailsPage({ account, token }) {
     try {
       const contract = await getFreelanceEscrowContract(normalizedAccount);
       const contractJobId = jobDetails.contractJobId;
-      // Call contract to set status to Declined
       const tx = await contract.declineJob(contractJobId);
       await tx.wait();
 
@@ -218,9 +236,21 @@ function JobDetailsPage({ account, token }) {
       );
       if (response.status === 200) {
         setJobDetails((prevDetails) => ({ ...prevDetails, status: "Declined" }));
+        setSnackbar({ open: true, message: "Job declined successfully!", severity: "success" });
       }
     } catch (error) {
       console.error("Error declining job:", error);
+      let errorMsg = "Error declining job. Please try again.";
+      if (error && error.message) {
+        if (error.shortMessage) {
+          errorMsg = error.shortMessage;
+        } else if (error.info && error.info.error && error.info.error.message) {
+          errorMsg = error.info.error.message;
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setSnackbar({ open: true, message: errorMsg, severity: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -231,18 +261,26 @@ function JobDetailsPage({ account, token }) {
     setMessage("");
     try {
       const contract = await getFreelanceEscrowContract(normalizedAccount);
-      // Use contractJobId for contract call
       const contractJobId = jobDetails.contractJobId;
       const jobOnChain = await contract.getJobDetails(contractJobId);
-      console.log("Stored freelancer:", jobOnChain.freelancer);
-      console.log("Your address:", normalizedAccount);
-      console.log("Match?", jobOnChain.freelancer.toLowerCase() === account.toLowerCase());
       const tx = await contract.completeJob(contractJobId);
       await tx.wait();
       setMessage("Job marked as completed successfully!");
+      setSnackbar({ open: true, message: "Job marked as completed successfully!", severity: "success" });
     } catch (error) {
       console.error("Error completing job:", error);
-      setMessage("Error completing job. Please try again.");
+      let errorMsg = "Error completing job. Please try again.";
+      if (error && error.message) {
+        if (error.shortMessage) {
+          errorMsg = error.shortMessage;
+        } else if (error.info && error.info.error && error.info.error.message) {
+          errorMsg = error.info.error.message;
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setSnackbar({ open: true, message: errorMsg, severity: "error" });
+      setMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -268,20 +306,31 @@ function JobDetailsPage({ account, token }) {
       const balanceAfter = await provider.getBalance(jobDetails.freelancer);
       console.log("Freelancer balance after:", ethers.formatEther(balanceAfter));
 
-      alert("Job approved and payment released successfully!");
+      setSnackbar({ open: true, message: "Job approved and payment released successfully!", severity: "success" });
     } catch (error) {
       console.error("Error approving job:", error);
-      alert("Error approving job. Please try again.");
+      // Try to extract a meaningful error message
+      let errorMsg = "Error approving job. Please try again.";
+      if (error && error.message) {
+        if (error.shortMessage) {
+          errorMsg = error.shortMessage;
+        } else if (error.info && error.info.error && error.info.error.message) {
+          errorMsg = error.info.error.message;
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setSnackbar({ open: true, message: errorMsg, severity: "error" });
     } finally {
       setIsLoading(false);
     }
   };
 
-    const handleRaiseDispute = async () => {
+  const handleRaiseDispute = async () => {
     try {
       const description = prompt("Describe the reason for the dispute:");
       if (!description) return;
-  
+
       // 1. Call the smart contract to raise the dispute
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
@@ -293,7 +342,7 @@ function JobDetailsPage({ account, token }) {
       // Call the contract function (adjust if your function signature is different)
       const tx = await contract.initiateDispute(jobDetails.contractJobId, description);
       const receipt = await tx.wait();
-  
+
       // Get the disputeId from the event logs (assuming event DisputeInitiated(jobId, disputeId))
       let disputeId = null;
       for (const log of receipt.logs) {
@@ -303,14 +352,14 @@ function JobDetailsPage({ account, token }) {
             disputeId = parsed.args.disputeId.toString();
             break;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
-  
+
       if (!disputeId) {
         alert("Dispute raised on-chain, but could not get disputeId from event.");
         return;
       }
-  
+
       // 2. Save the dispute in your backend/database
       const response = await axios.post(`${config.API_BASE_URL}/api/disputes`, {
         jobId: jobDetails.contractJobId,
@@ -324,7 +373,7 @@ function JobDetailsPage({ account, token }) {
           "Wallet-Address": normalizedAccount,
         },
       });
-  
+
       if (response.status === 200) {
         alert("Dispute raised successfully!");
         setDispute(response.data);
@@ -384,6 +433,21 @@ function JobDetailsPage({ account, token }) {
       >
         Back
       </Button>
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       <JobDetails jobDetails={jobDetails} />
       {/* --- Dispute Info --- */}

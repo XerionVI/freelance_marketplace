@@ -102,3 +102,24 @@ exports.enableVoting = (req, res) => {
     res.status(200).send({ message: "Voting enabled for this dispute." });
   });
 };
+
+// Update arguments for a dispute
+exports.updateDisputeArguments = (req, res) => {
+  const { disputeId } = req.params;
+  const { client_argument, freelancer_argument } = req.body;
+  const query = `
+    UPDATE disputes
+    SET client_argument = ?, freelancer_argument = ?
+    WHERE dispute_id = ?
+  `;
+  db.query(query, [client_argument, freelancer_argument, disputeId], (err, result) => {
+    if (err) {
+      console.error("Error updating arguments:", err);
+      return res.status(500).send("Error updating arguments.");
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Dispute not found.");
+    }
+    res.status(200).send({ message: "Arguments updated." });
+  });
+};

@@ -5,6 +5,7 @@ import VotingDisputeResolutionABI from "../../abi/VotingDisputeResolutionABI";
 import config from "../../config";
 import axios from "axios";
 import FreelanceEscrowABI from "../../abi/FreelanceEscrowABI";
+import DisputeModal from "./DisputeModal";
 
 const ADMIN_ADDRESS = config.ADMIN_ADDRESS;
 
@@ -110,7 +111,7 @@ function DisputeVoteList({ account }) {
     setVoting((prev) => ({ ...prev, [disputeId]: false }));
   };
 
-    const handleResolveDispute = async (disputeId) => {
+  const handleResolveDispute = async (disputeId) => {
     setResolving(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -122,12 +123,12 @@ function DisputeVoteList({ account }) {
       );
       const tx = await escrowContract.resolveDispute(disputeId);
       await tx.wait();
-  
+
       // Call backend to mark as resolved
       await axios.patch(
         `${config.API_BASE_URL}/api/disputes/mark-resolved/${disputeId}`
       );
-  
+
       alert("Dispute resolved!");
       setDisputes((prev) =>
         prev.map((d) =>
@@ -189,83 +190,20 @@ function DisputeVoteList({ account }) {
           ))}
         </tbody>
       </Table>
-
       {/* Dispute Details Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Dispute Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedDispute && (
-            <>
-              <p><strong>Job ID:</strong> {selectedDispute.job_id}</p>
-              <p><strong>Client:</strong> {selectedDispute.client}</p>
-              <p><strong>Freelancer:</strong> {selectedDispute.freelancer}</p>
-              <p><strong>Description:</strong> {selectedDispute.description}</p>
-              <hr />
-              <p>
-                <strong>Votes for Client:</strong> {voteStats.votesForClient}<br />
-                <strong>Votes for Freelancer:</strong> {voteStats.votesForFreelancer}
-              </p>
-              <p>
-                <strong>Client %:</strong> {voteStats.votesForClient + voteStats.votesForFreelancer > 0
-                  ? Math.round((voteStats.votesForClient / (voteStats.votesForClient + voteStats.votesForFreelancer)) * 100)
-                  : 0
-                }%
-                <br />
-                <strong>Freelancer %:</strong> {voteStats.votesForClient + voteStats.votesForFreelancer > 0
-                  ? Math.round((voteStats.votesForFreelancer / (voteStats.votesForClient + voteStats.votesForFreelancer)) * 100)
-                  : 0
-                }%
-              </p>
-              {!selectedDispute.resolved && (
-                <>
-                  {votedStatus[selectedDispute.dispute_id] ? (
-                    <p className="text-info">You have already voted.</p>
-                  ) : (
-                    <div>
-                      <Button
-                        variant="success"
-                        className="me-2 mb-2"
-                        onClick={() => castVote(selectedDispute.dispute_id, true)}
-                        disabled={voting[selectedDispute.dispute_id]}
-                      >
-                        {voting[selectedDispute.dispute_id] ? <Spinner size="sm" /> : "Vote Client"}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        className="mb-2"
-                        onClick={() => castVote(selectedDispute.dispute_id, false)}
-                        disabled={voting[selectedDispute.dispute_id]}
-                      >
-                        {voting[selectedDispute.dispute_id] ? <Spinner size="sm" /> : "Vote Freelancer"}
-                      </Button>
-                    </div>
-                  )}
-                  {/* Admin-only resolve button at the bottom */}
-                  {isAdmin && (
-                    <div className="d-grid mt-3">
-                      <Button
-                        variant="danger"
-                        onClick={() => handleResolveDispute(selectedDispute.dispute_id)}
-                        disabled={resolving}
-                      >
-                        {resolving ? <Spinner size="sm" /> : "End Voting & Resolve"}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <DisputeModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        selectedDispute={selectedDispute}
+        voteStats={voteStats}
+        votedStatus={votedStatus}
+        voting={voting}
+        castVote={castVote}
+        isAdmin={isAdmin}
+        resolving={resolving}
+        handleResolveDispute={handleResolveDispute}
+        account={account}
+      />
     </div>
   );
 }
