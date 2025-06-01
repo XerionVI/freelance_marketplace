@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
-import AddressDetails from "../files/AddressDetails";
+import AddressDetails from "../history/AddressDetails";
 
 function JobList({ account, filter }) {
   const [jobs, setJobs] = useState([]);

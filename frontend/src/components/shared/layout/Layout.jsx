@@ -3,27 +3,24 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { Box, Container } from "@mui/material";
 
-function Layout({ children, account, onLogout }) {
+function Layout({ account, token, onLogout, onProfile, children }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      {/* Header */}
-      <Header account={account} onLogout={onLogout} />
-
-      {/* Main Content */}
-      <Container
-        maxWidth="lg"
+    <>
+      <Header account={account} token={token} onLogout={onLogout} onProfile={onProfile} />
+      <Box
         sx={{
-          flex: 1, // Ensures the content area takes up available space
-          mt: 4,
-          mb: 4,
+          minHeight: "calc(100vh - 120px)", // Leaves space for header/footer
+          bgcolor: "background.default",
+          pt: { xs: 2, sm: 4 },
+          pb: { xs: 2, sm: 4 },
         }}
       >
-        {children}
-      </Container>
-
-      {/* Footer */}
+        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 3 } }}>
+          {children}
+        </Container>
+      </Box>
       <Footer />
-    </Box>
+    </>
   );
 }
 

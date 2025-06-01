@@ -18,43 +18,51 @@ exports.register = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { username, email, password } = req.body;
+  const { username, email, password, display_name, wallet_address, role } = req.body;
 
   try {
-    // Check if user exists
     db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
       if (results.length > 0) {
         return res.status(400).json({ msg: "User already exists" });
       }
 
-      // Hash password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // Insert user into database
       db.query(
-        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-        [username, email, hashedPassword],
+        "INSERT INTO users (username, email, password, display_name, wallet_address, role) VALUES (?, ?, ?, ?, ?, ?)",
+        [username, email, hashedPassword, display_name, wallet_address, role],
         (err, result) => {
           if (err) {
             console.error("Error inserting user:", err);
             return res.status(500).send("Server error");
           }
 
-          // Generate JWT
-          const payload = {
-            user: {
-              id: result.insertId,
-            },
-          };
+          // Insert into user_profiles after user is created
+          db.query(
+            "INSERT INTO user_profiles (user_id) VALUES (?)",
+            [result.insertId],
+            (err2) => {
+              if (err2) {
+                console.error("Error creating user profile:", err2);
+                return res.status(500).send("Server error");
+              }
 
-          jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" },
-            (err, token) => {
-              if (err) throw err;
-              res.json({ token });
+              const payload = {
+                user: {
+                  id: result.insertId,
+                },
+              };
+
+              jwt.sign(
+                payload,
+                process.env.JWT_SECRET,
+                { expiresIn: "1h" },
+                (err, token) => {
+                  if (err) throw err;
+                  res.json({ token });
+                }
+              );
             }
           );
         }

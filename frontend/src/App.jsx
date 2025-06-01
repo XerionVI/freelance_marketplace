@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Box, Typography, Tabs, Tab, Button, Alert, Grid } from "@mui/material";
+import { Container, Box, Typography, Tabs, Tab, Grid } from "@mui/material";
 import axios from "axios";
 import AuthForm from "./components/auth/AuthForm";
 import CreateJobForm from "./components/jobs/CreateJobForm";
@@ -7,10 +7,13 @@ import JobListDB from "./components/jobs/JobListDB";
 import JobList from "./components/jobs/JobList";
 import DisputeHome from "./components/disputes/DisputeHome";
 import JobDetailsPage from "./components/jobs/JobDetailsPage";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import listenForJobCreated from "./utils/listenForJobCreated";
 import Layout from "./components/shared/layout/Layout";
-import { ethers } from "ethers"; // Import ethers for address normalization
+import LandingPage from "./components/Home/LandingPage";
+import HomePage from "./components/Home/HomePage";
+import UserProfile from "./components/User/UserProfile";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import listenForJobCreated from "./utils/listenForJobCreated";
+import { ethers } from "ethers";
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -19,26 +22,24 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [username, setUsername] = useState(null);
   const [tabValue, setTabValue] = useState("displayJobs");
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     const connectWallet = async () => {
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-          const normalizedAccount = ethers.getAddress(accounts[0]); // Normalize the account
-          console.log("Connected account (normalized):", normalizedAccount);
+          const normalizedAccount = ethers.getAddress(accounts[0]);
           setAccount(normalizedAccount);
 
           listenForJobCreated(normalizedAccount);
 
           window.ethereum.on("accountsChanged", (accounts) => {
             if (accounts.length > 0) {
-              const normalizedChangedAccount = ethers.getAddress(accounts[0]); // Normalize the changed account
-              console.log("Account changed (normalized):", normalizedChangedAccount);
+              const normalizedChangedAccount = ethers.getAddress(accounts[0]);
               setAccount(normalizedChangedAccount);
               listenForJobCreated(normalizedChangedAccount);
             } else {
-              console.log("No accounts connected.");
               setAccount(null);
             }
           });
@@ -61,16 +62,28 @@ function App() {
       });
       setUsername(response.data.username);
     } catch (error) {
-      console.error("Error fetching username:", error);
       if (error.response && error.response.status === 401) {
         handleLogout();
       }
     }
   };
 
+  const fetchUserProfile = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get("http://localhost:5000/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUserProfile(response.data);
+    } catch (error) {
+      setUserProfile(null);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchUsername();
+      fetchUserProfile();
     }
   }, [account, token]);
 
@@ -78,12 +91,14 @@ function App() {
     localStorage.setItem("token", token);
     setToken(token);
     fetchUsername();
+    fetchUserProfile();
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
     setUsername(null);
+    setUserProfile(null);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -92,21 +107,19 @@ function App() {
 
   return (
     <Router>
-      <Layout account={account} onLogout={handleLogout}>
-        {!token ? (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <AuthForm isLogin={true} onAuthSuccess={handleAuthSuccess} />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <AuthForm isLogin={false} onAuthSuccess={handleAuthSuccess} />
-            </Grid>
-          </Grid>
-        ) : (
-          <Routes>
-            <Route
-              path="/"
-              element={
+      <Layout account={account} token={token} onLogout={handleLogout}>
+        <Routes>
+          {/* Landing Page (public) */}
+          <Route
+            path="/"
+            element={
+              !token ? (
+                <LandingPage
+                  onLogin={() => window.location.replace("/auth")}
+                  onSignUp={() => window.location.replace("/auth")}
+                />
+              ) : (
+                // Authenticated home/dashboard
                 <>
                   <Tabs
                     value={tabValue}
@@ -118,7 +131,7 @@ function App() {
                   >
                     <Tab label="Create Job" value="createJob" />
                     <Tab label="Display Jobs" value="displayJobs" />
-                    <Tab label="Disputes" value="disputes" /> {/* Renamed for clarity */}
+                    <Tab label="Disputes" value="disputes" />
                   </Tabs>
 
                   {tabValue === "createJob" && (
@@ -150,14 +163,41 @@ function App() {
                     </Grid>
                   )}
                 </>
-              }
-            />
-            <Route
-              path="/job-details/:jobId"
-              element={<JobDetailsPage account={account} token={token} />}
-            />
-          </Routes>
-        )}
+              )
+            }
+          />
+          {/* Home Page */}
+          <Route
+            path="/home"
+            element={
+              <HomePage
+                onLogin={() => window.location.replace("/auth")}
+                onRegister={() => window.location.replace("/auth")}
+              />
+            }
+          />
+          {/* Auth Page */}
+          <Route
+            path="/auth"
+            element={
+              <Grid container justifyContent="center">
+                <Grid item xs={12} md={6}>
+                  <AuthForm onAuthSuccess={handleAuthSuccess} />
+                </Grid>
+              </Grid>
+            }
+          />
+          {/* Job Details Page */}
+          <Route
+            path="/job-details/:jobId"
+            element={<JobDetailsPage account={account} token={token} />}
+          />
+          {/* User Profile Page */}
+          <Route
+            path="/profile"
+            element={<UserProfile profile={userProfile} />}
+          />
+        </Routes>
       </Layout>
     </Router>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   TableContainer,
   Table,
@@ -17,8 +17,58 @@ import {
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import PersonIcon from "@mui/icons-material/Person";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import config from "../../config";
+import PreviewModal from "./PreviewModal";
 
-const UploadedFiles = ({ jobFiles, handleShowNotes, handlePreviewFile }) => {
+const handleDownloadFile = (fileId) => {
+  const url = `${config.API_BASE_URL}/api/files/download/${fileId}`;
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const UploadedFiles = ({ jobFiles, handleShowNotes }) => {
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewType, setPreviewType] = useState("");
+
+  const handlePreviewFile = async (fileUrl) => {
+    if (!fileUrl) return;
+    // Ensure the fileUrl is absolute
+    const url = fileUrl.startsWith("http")
+      ? fileUrl
+      : `${config.API_BASE_URL}${fileUrl}`;
+    const ext = url.split('.').pop().toLowerCase();
+
+    if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) {
+      setPreviewType("image");
+      setPreviewFile(url);
+    } else if (ext === "pdf") {
+      setPreviewType("pdf");
+      setPreviewFile(url);
+    } else if (ext === "txt") {
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        setPreviewType("txt");
+        setPreviewFile(text);
+      } catch (e) {
+        setPreviewType("other");
+        setPreviewFile(url);
+      }
+    } else {
+      setPreviewType("other");
+      setPreviewFile(url);
+    }
+  };
+
+  const closePreview = () => {
+    setPreviewFile(null);
+    setPreviewType("");
+  };
+
   return (
     <Card sx={{ mb: 4, background: "#f8fafc" }}>
       <CardContent>
@@ -104,6 +154,15 @@ const UploadedFiles = ({ jobFiles, handleShowNotes, handlePreviewFile }) => {
                       >
                         Preview
                       </Button>
+                      <Button
+                        variant="outlined"
+                        color="success"
+                        onClick={() => handleDownloadFile(file.file_id)}
+                        size="small"
+                        sx={{ ml: 1 }}
+                      >
+                        Download
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -112,6 +171,12 @@ const UploadedFiles = ({ jobFiles, handleShowNotes, handlePreviewFile }) => {
           </Table>
         </TableContainer>
       </CardContent>
+      <PreviewModal
+        open={Boolean(previewFile)}
+        onClose={closePreview}
+        previewType={previewType}
+        previewFile={previewFile}
+      />
     </Card>
   );
 };

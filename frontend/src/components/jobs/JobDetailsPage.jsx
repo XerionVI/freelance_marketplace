@@ -9,10 +9,10 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import config from "../../config";
-import NotesModal from "../files/NotesModal";
+import NotesModal from "../notes/NotesModal";
 import JobDetails from "./JobDetails";
-import UploadedFiles from "./UploadedFiles";
-import UploadFileSection from "./UploadFileSection";
+import UploadedFiles from "../files/UploadedFiles";
+import UploadFileSection from "../files/UploadFileSection";
 import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
 import { ethers } from "ethers";
 import FreelanceEscrowABI from "../../abi/FreelanceEscrowABI";
@@ -31,9 +31,9 @@ function JobDetailsPage({ account, token }) {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [showNotesModal, setShowNotesModal] = useState(false);
-  const [previewFile, setPreviewFile] = useState(null);
   const [dispute, setDispute] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "error" });
+
 
   console.log("Account on job page:", account);
 
@@ -114,9 +114,6 @@ function JobDetailsPage({ account, token }) {
     fetchDispute();
   }, [jobDetails, account, token]);
 
-
-
-
   const handleFileUpload = async (e) => {
     e.preventDefault();
 
@@ -164,14 +161,6 @@ function JobDetailsPage({ account, token }) {
     } catch (error) {
       console.error("Error fetching notes:", error);
     }
-  };
-
-  const handlePreviewFile = (fileUrl) => {
-    setPreviewFile(fileUrl);
-  };
-
-  const closePreview = () => {
-    setPreviewFile(null);
   };
 
   const handleAcceptJob = async () => {
@@ -531,7 +520,6 @@ function JobDetailsPage({ account, token }) {
           <UploadedFiles
             jobFiles={jobFiles}
             handleShowNotes={handleShowNotes}
-            handlePreviewFile={handlePreviewFile}
           />
 
           <UploadFileSection
@@ -549,21 +537,6 @@ function JobDetailsPage({ account, token }) {
             handleAddNote={handleAddNote}
           />
         </>
-      )}
-
-      {previewFile && (
-        <Modal open={Boolean(previewFile)} onClose={closePreview}>
-          <Box sx={{ p: 4, backgroundColor: "white", maxWidth: "80%", margin: "auto" }}>
-            {previewFile.endsWith(".pdf") ? (
-              <iframe src={previewFile} width="100%" height="500px" title="File Preview"></iframe>
-            ) : (
-              <img src={previewFile} alt="Preview" style={{ maxWidth: "100%" }} />
-            )}
-            <Button onClick={closePreview} sx={{ mt: 2 }}>
-              Close
-            </Button>
-          </Box>
-        </Modal>
       )}
     </Box>
   );

@@ -52,6 +52,17 @@ app.use("/api/votes", voteRoutes);
 const disputeRoutes = require("./routes/disputes");
 app.use("/api/disputes", disputeRoutes);
 
+// Import user profile routes
+const userRoutes = require("./routes/users");
+app.use("/api/users", userRoutes);
+
+// Import skills routes
+const skillsRoutes = require("./routes/skills");
+app.use("/api/skills", skillsRoutes);
+
+// Serve uploads/works as static files
+app.use("/uploads/works", express.static(path.join(__dirname, "uploads/works")));
+
 // Serve React frontend for other routes (this must come last)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
