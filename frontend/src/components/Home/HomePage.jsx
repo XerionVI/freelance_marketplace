@@ -16,6 +16,8 @@ import {
   Rating,
 } from "@mui/material";
 import logo from "../../assets/chainGigs.png"; // Adjust path as needed
+import { useNavigate } from "react-router-dom";
+import AnimatedLogo from "../../assets/AnimatedLogo.jsx"; // Adjust path as needed
 
 const categories = [
   "Design",
@@ -51,11 +53,13 @@ const featuredFreelancers = [
 ];
 
 function HomePage({ onLogin, onRegister }) {
+  const navigate = useNavigate();
   return (
     <Box>
       {/* Hero Section */}
       <Box sx={{ bgcolor: "#f8fafc", py: 8, textAlign: "center" }}>
         <Container maxWidth="md">
+          <AnimatedLogo />
           <Typography variant="h3" fontWeight="bold" gutterBottom>
             Find top freelance talent for your next project
           </Typography>
@@ -63,7 +67,12 @@ function HomePage({ onLogin, onRegister }) {
             Connect with skilled professionals and get work done securely.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 4 }}>
-            <Button variant="contained" size="large" color="primary">
+            <Button
+              variant="contained"
+              size="large"
+              color="primary"
+              onClick={() => navigate("/freelancer-home")}
+            >
               Find Talent
             </Button>
             <Button variant="outlined" size="large" color="primary">

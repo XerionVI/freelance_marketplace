@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import {
   Box,
   Card,
@@ -18,7 +19,14 @@ import StarIcon from "@mui/icons-material/Star";
 import WorkIcon from "@mui/icons-material/Work";
 import EmailIcon from "@mui/icons-material/Email";
 import LanguageIcon from "@mui/icons-material/Language";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+
 import axios from "axios";
+import UserModal from "./UserModal";
+import AvatarModal from "./AvatarModal";
+import config from "../../config";
+
+import { useNavigate } from "react-router-dom";
 
 const experienceLevels = [
   { value: "beginner", label: "Beginner" },
@@ -26,7 +34,8 @@ const experienceLevels = [
   { value: "expert", label: "Expert" },
 ];
 
-const UserProfile = () => {
+const UserProfile = ({ profile: propProfile }) => {
+  const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState({
@@ -39,14 +48,80 @@ const UserProfile = () => {
   });
   const [allSkills, setAllSkills] = useState([]);
   const [loadingSkills, setLoadingSkills] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarHover, setAvatarHover] = useState(false);
+  const navigate = useNavigate();
 
-  // Fetch profile on mount
+  const handleMessage = async () => {
+    try {
+      // Start or get conversation with this user
+      const res = await axios.post(
+  `${config.API_BASE_URL}/api/conversations/start`,
+  { otherUserId: profile.id },
+  { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+);
+      const conversationId = res.data.id;
+      // Navigate to chat page
+      navigate(`/chat/${conversationId}`);
+    } catch (e) {
+      alert("Failed to start conversation.");
+    }
+  };
+
+  // Handler for avatar upload
+  const handleAvatarUpload = async (file) => {
+    setAvatarLoading(true);
+    try {
+      // You should implement the backend endpoint for avatar upload
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const res = await axios.post(
+        "/api/users/avatar",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      // Update avatar in profile
+      setProfile((prev) => ({
+        ...prev,
+        avatar_url: res.data.avatar_url,
+      }));
+      setForm((prev) => ({
+        ...prev,
+        avatar_url: res.data.avatar_url,
+      }));
+      setAvatarModalOpen(false);
+    } catch (e) {
+      alert("Failed to upload avatar.");
+    }
+    setAvatarLoading(false);
+  };
+
+  // Fetch profile on mount or when id changes
   useEffect(() => {
+    // If profile is passed as prop, use it (for SSR or prefetch)
+    if (propProfile) {
+      setProfile(propProfile);
+      return;
+    }
     const fetchProfile = async () => {
       try {
-        const res = await axios.get("/api/users/profile", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        let res;
+        if (id) {
+          // Public profile (no token)
+          res = await axios.get(`/api/users/${id}/profile`);
+        } else {
+          // Own profile (token required)
+          res = await axios.get("/api/users/profile", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+        }
         setProfile(res.data);
         setForm({
           display_name: res.data.display_name || "",
@@ -61,7 +136,10 @@ const UserProfile = () => {
       }
     };
     fetchProfile();
-  }, []);
+  }, [id, propProfile]);
+
+  // Only allow editing if not in preview mode
+  const canEdit = !id;
 
   // Fetch all skills for selection when editing
   const fetchSkills = async () => {
@@ -130,11 +208,53 @@ const UserProfile = () => {
       <Card sx={{ maxWidth: 800, mx: "auto", mt: 4, p: 3, background: "#f8fafc" }}>
         {/* Banner & Avatar */}
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Avatar
-            src={profile.avatar_url}
-            alt={profile.display_name}
-            sx={{ width: 96, height: 96, mr: 3, border: "3px solid #1976d2" }}
-          />
+          <Box
+            sx={{ position: "relative", mr: 3, width: 96, height: 96 }}
+            onMouseEnter={() => setAvatarHover(true)}
+            onMouseLeave={() => setAvatarHover(false)}
+          >
+            <Avatar
+              src={
+                profile.avatar_url
+                  ? profile.avatar_url.startsWith("http")
+                    ? profile.avatar_url
+                    : `${config.API_BASE_URL}${profile.avatar_url}`
+                  : undefined
+              }
+              alt={profile.display_name}
+              sx={{
+                width: 96,
+                height: 96,
+                border: "3px solid #1976d2",
+                filter: avatarHover ? "blur(2px) brightness(0.8)" : "none",
+                transition: "filter 0.2s",
+                cursor: "pointer",
+              }}
+            />
+            {avatarHover && (
+              <Button
+                onClick={() => setAvatarModalOpen(true)}
+                sx={{
+                  minWidth: 0,
+                  p: 1,
+                  bgcolor: "rgba(25, 118, 210, 0.7)",
+                  color: "#fff",
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  borderRadius: "50%",
+                  boxShadow: 2,
+                  zIndex: 2,
+                  "&:hover": {
+                    bgcolor: "rgba(25, 118, 210, 0.9)",
+                  },
+                }}
+              >
+                <PhotoCameraIcon fontSize="medium" />
+              </Button>
+            )}
+          </Box>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" fontWeight="bold">
               {profile.display_name}
@@ -162,7 +282,13 @@ const UserProfile = () => {
           </Box>
           {/* Action Buttons */}
           <Stack spacing={1}>
-            <Button variant="contained" color="primary" startIcon={<EmailIcon />}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<EmailIcon />}
+              onClick={handleMessage}
+              disabled={!localStorage.getItem("token") || !profile.id}
+            >
               Message
             </Button>
             <Button variant="outlined" color="success">
@@ -221,91 +347,29 @@ const UserProfile = () => {
           )}
         </Box>
       </Card>
-
-      {/* Edit Modal */}
-      <Modal open={editOpen} onClose={handleClose}>
-        <Box sx={{
-          p: 4,
-          bgcolor: "#fff",
-          maxWidth: 500,
-          mx: "auto",
-          mt: 8,
-          borderRadius: 2,
-          boxShadow: 24,
-        }}>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>Edit Profile</Typography>
-          <TextField
-            label="Display Name"
-            name="display_name"
-            value={form.display_name}
+      {/* Avatar Modal and Edit Modal only if canEdit */}
+      {canEdit && (
+        <>
+          <UserModal
+            open={editOpen}
+            onClose={handleClose}
+            form={form}
             onChange={handleChange}
-            fullWidth
-            sx={{ mb: 2 }}
+            onSkillChange={handleSkillChange}
+            onSave={handleSave}
+            experienceLevels={experienceLevels}
+            allSkills={allSkills}
+            loadingSkills={loadingSkills}
           />
-          <TextField
-            label="Bio"
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            fullWidth
-            multiline
-            sx={{ mb: 2 }}
+          <AvatarModal
+            open={avatarModalOpen}
+            onClose={() => setAvatarModalOpen(false)}
+            onUpload={handleAvatarUpload}
+            loading={avatarLoading}
+            currentAvatar={profile.avatar_url}
           />
-          <TextField
-            label="Avatar URL"
-            name="avatar_url"
-            value={form.avatar_url}
-            onChange={handleChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Portfolio URL"
-            name="portfolio_url"
-            value={form.portfolio_url}
-            onChange={handleChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            select
-            label="Experience Level"
-            name="experience_level"
-            value={form.experience_level}
-            onChange={handleChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          >
-            {experienceLevels.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Skills"
-            name="skills"
-            value={form.skills}
-            onChange={handleSkillChange}
-            fullWidth
-            SelectProps={{ multiple: true }}
-            sx={{ mb: 2 }}
-            disabled={loadingSkills}
-            helperText="Hold Ctrl/Cmd to select multiple"
-          >
-            {allSkills.map((skill) => (
-              <MenuItem key={skill.id} value={skill.id}>
-                {skill.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button variant="contained" onClick={handleSave}>Save</Button>
-          </Stack>
-        </Box>
-      </Modal>
+        </>
+      )}
     </>
   );
 };

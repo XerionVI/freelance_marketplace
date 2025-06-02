@@ -15,7 +15,7 @@ import {
   Divider,
   Link,
 } from "@mui/material";
-import logo from "../../assets/chainGigs.png"; // Adjust path as needed
+import AnimatedLogo from "../../assets/AnimatedLogo";
 
 const featuredFreelancers = [
   {
@@ -61,6 +61,7 @@ function LandingPage({ onLogin, onSignUp }) {
       {/* Hero Section */}
       <Box sx={{ bgcolor: "#f8fafc", py: 8, textAlign: "center" }}>
         <Container maxWidth="md">
+          <AnimatedLogo width={100} height={100} />
           <Typography variant="h3" fontWeight="bold" gutterBottom>
             Find & Hire Top Freelance Talent — Fast & Secure
           </Typography>

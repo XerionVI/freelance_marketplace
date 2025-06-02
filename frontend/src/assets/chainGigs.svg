@@ -1,0 +1,47 @@
+<!-- ChainGigs Logo (SVG Only, No Text) -->
+<svg
+  width="200"
+  height="200"
+  viewBox="0 0 200 200"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background circle with glow -->
+  <circle cx="100" cy="100" r="90" fill="url(#glowGradient)" />
+
+  <!-- Animated atom-like ring -->
+  <ellipse
+    cx="100"
+    cy="100"
+    rx="60"
+    ry="25"
+    stroke="#61DAFB"
+    stroke-width="2"
+    fill="none"
+    transform="rotate(45 100 100)"
+  />
+  <ellipse
+    cx="100"
+    cy="100"
+    rx="60"
+    ry="25"
+    stroke="#61DAFB"
+    stroke-width="2"
+    fill="none"
+    transform="rotate(-45 100 100)"
+  />
+
+  <!-- Crypto Coin -->
+  <circle cx="100" cy="75" r="15" fill="#FACC15" stroke="#000" stroke-width="2" />
+  <text x="92" y="80" font-size="16" font-weight="bold" fill="#000">₿</text>
+
+  <!-- Handshake Icon -->
+  <text x="85" y="135" font-size="24">🤝</text>
+
+  <defs>
+    <radialGradient id="glowGradient" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5">
+      <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#9333EA" stop-opacity="0.3" />
+    </radialGradient>
+  </defs>
+</svg>

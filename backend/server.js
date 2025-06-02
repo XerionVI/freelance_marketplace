@@ -5,7 +5,13 @@ const mysql = require("mysql");
 const path = require("path");
 const cors = require("cors");
 
+
 const app = express();
+
+const http = require("http");
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, { cors: { origin: "*" } });
 
 // Middleware
 app.use(cors());
@@ -27,6 +33,20 @@ db.connect((err) => {
     return;
   }
   console.log("Connected to MySQL database.");
+});
+
+io.on("connection", (socket) => {
+  // Join user to their own room for private messages
+  socket.on("join", (userId) => {
+    socket.join(`user_${userId}`);
+  });
+
+  // Listen for sending messages
+  socket.on("send_message", (data) => {
+    // data: { conversationId, senderId, receiverId, content }
+    // Save to DB here if you want, or rely on REST API
+    io.to(`user_${data.receiverId}`).emit("receive_message", data);
+  });
 });
 
 // Import authentication routes
@@ -62,6 +82,13 @@ app.use("/api/skills", skillsRoutes);
 
 // Serve uploads/works as static files
 app.use("/uploads/works", express.static(path.join(__dirname, "uploads/works")));
+
+// Serve uploads/avatars as static files
+app.use("/uploads/avatars", express.static(path.join(__dirname, "uploads/avatars")));
+
+// Import conversations routes
+const conversationsRoutes = require("./routes/conversations");
+app.use("/api/conversations", conversationsRoutes);
 
 // Serve React frontend for other routes (this must come last)
 app.get("*", (req, res) => {
