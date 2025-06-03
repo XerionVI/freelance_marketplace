@@ -19,6 +19,22 @@
 CREATE DATABASE IF NOT EXISTS `freelance_marketplace` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `freelance_marketplace`;
 
+-- Dumping structure for table freelance_marketplace.conversations
+CREATE TABLE IF NOT EXISTS `conversations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user1_id` int NOT NULL,
+  `user2_id` int NOT NULL,
+  `user_low_id` int NOT NULL,
+  `user_high_id` int NOT NULL,
+  `last_message` text,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_pair` (`user_low_id`,`user_high_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table freelance_marketplace.conversations: ~0 rows (approximately)
+DELETE FROM `conversations`;
+
 -- Dumping structure for table freelance_marketplace.disputes
 CREATE TABLE IF NOT EXISTS `disputes` (
   `dispute_id` int NOT NULL AUTO_INCREMENT,
@@ -34,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `disputes` (
   UNIQUE KEY `unique_job_dispute` (`job_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table freelance_marketplace.disputes: ~0 rows (approximately)
+-- Dumping data for table freelance_marketplace.disputes: ~1 rows (approximately)
 DELETE FROM `disputes`;
 
 -- Dumping structure for table freelance_marketplace.file_notes
@@ -49,11 +65,8 @@ CREATE TABLE IF NOT EXISTS `file_notes` (
   CONSTRAINT `file_notes_ibfk_1` FOREIGN KEY (`file_id`) REFERENCES `job_files` (`file_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table freelance_marketplace.file_notes: ~2 rows (approximately)
+-- Dumping data for table freelance_marketplace.file_notes: ~0 rows (approximately)
 DELETE FROM `file_notes`;
-INSERT INTO `file_notes` (`note_id`, `file_id`, `note`, `added_by`, `added_at`) VALUES
-	(5, 9, 'need more effects no minute 1:45', 'Client', '2025-06-01 12:54:12'),
-	(6, 9, 'sure i will add it', 'Freelancer', '2025-06-01 12:54:28');
 
 -- Dumping structure for table freelance_marketplace.jobs
 CREATE TABLE IF NOT EXISTS `jobs` (
@@ -67,13 +80,31 @@ CREATE TABLE IF NOT EXISTS `jobs` (
   `transactionHash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `voteable` tinyint(1) DEFAULT '0',
+  `job_type` enum('ClientToFreelancer','FreelancerToClient') NOT NULL DEFAULT 'ClientToFreelancer',
   PRIMARY KEY (`job_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table freelance_marketplace.jobs: ~1 rows (approximately)
 DELETE FROM `jobs`;
-INSERT INTO `jobs` (`job_id`, `contractJobId`, `client`, `freelancer`, `amount`, `status`, `blockNumber`, `transactionHash`, `created_at`, `voteable`) VALUES
-	(46, 0, '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f', '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65', 1.00000000, 'Accepted', 4, '0xea3272bf129f34d511e936cc3e1e7dac981f7da44bcdcf29995834646f1a635e', '2025-06-01 12:51:25', 0);
+
+-- Dumping structure for table freelance_marketplace.job_applications
+CREATE TABLE IF NOT EXISTS `job_applications` (
+  `application_id` int NOT NULL AUTO_INCREMENT,
+  `job_id` int NOT NULL,
+  `freelancer` varchar(255) NOT NULL,
+  `cover_letter` text NOT NULL,
+  `expected_amount` decimal(18,8) DEFAULT NULL,
+  `portfolio_url` varchar(255) DEFAULT NULL,
+  `timezone` varchar(100) DEFAULT NULL,
+  `status` enum('Submitted','Reviewed','Accepted','Rejected') DEFAULT 'Submitted',
+  `submitted_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`application_id`),
+  KEY `job_id` (`job_id`),
+  CONSTRAINT `job_applications_ibfk_1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`job_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table freelance_marketplace.job_applications: ~0 rows (approximately)
+DELETE FROM `job_applications`;
 
 -- Dumping structure for table freelance_marketplace.job_details
 CREATE TABLE IF NOT EXISTS `job_details` (
@@ -81,6 +112,12 @@ CREATE TABLE IF NOT EXISTS `job_details` (
   `job_id` int NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text NOT NULL,
+  `category_id` int DEFAULT NULL,
+  `cover_letter` text,
+  `deadline` date DEFAULT NULL,
+  `delivery_format` varchar(255) DEFAULT NULL,
+  `timezone` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`job_details_id`),
   KEY `job_id` (`job_id`),
   CONSTRAINT `job_details_ibfk_1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`job_id`) ON DELETE CASCADE
@@ -95,6 +132,8 @@ CREATE TABLE IF NOT EXISTS `job_files` (
   `job_id` int NOT NULL,
   `file_name` varchar(255) NOT NULL,
   `file_path` varchar(255) NOT NULL,
+  `file_type` varchar(50) DEFAULT NULL,
+  `visibility` enum('ClientOnly','FreelancerOnly','Both') DEFAULT 'Both',
   `uploaded_by` enum('Client','Freelancer') NOT NULL,
   `uploaded_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`file_id`),
@@ -102,14 +141,25 @@ CREATE TABLE IF NOT EXISTS `job_files` (
   CONSTRAINT `job_files_ibfk_1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`job_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table freelance_marketplace.job_files: ~5 rows (approximately)
+-- Dumping data for table freelance_marketplace.job_files: ~0 rows (approximately)
 DELETE FROM `job_files`;
-INSERT INTO `job_files` (`file_id`, `job_id`, `file_name`, `file_path`, `uploaded_by`, `uploaded_at`) VALUES
-	(9, 46, '1748782425662-120632297.txt', 'D:\\Project TA\\freelance_marketplace\\backend\\uploads\\1748782425662-120632297.txt', 'Freelancer', '2025-06-01 12:53:45'),
-	(10, 46, '1748795473617-681105362.txt', 'D:\\Project TA\\freelance_marketplace\\backend\\uploads\\1748795473617-681105362.txt', 'Freelancer', '2025-06-01 16:31:13'),
-	(11, 46, '1748795505353-738131849.txt', 'D:\\Project TA\\freelance_marketplace\\backend\\uploads\\works\\1748795505353-738131849.txt', 'Freelancer', '2025-06-01 16:31:45'),
-	(12, 46, '1748796194090-302301305.txt', 'D:\\Project TA\\freelance_marketplace\\backend\\uploads\\works\\1748796194090-302301305.txt', 'Freelancer', '2025-06-01 16:43:14'),
-	(13, 46, '1748798852324-185689284.png', 'D:\\Project TA\\freelance_marketplace\\backend\\uploads\\works\\1748798852324-185689284.png', 'Freelancer', '2025-06-01 17:27:32');
+
+-- Dumping structure for table freelance_marketplace.messages
+CREATE TABLE IF NOT EXISTS `messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `conversation_id` int NOT NULL,
+  `sender_id` int NOT NULL,
+  `content` text NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_read` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation_id` (`conversation_id`),
+  KEY `idx_sender_id` (`sender_id`),
+  CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table freelance_marketplace.messages: ~0 rows (approximately)
+DELETE FROM `messages`;
 
 -- Dumping structure for table freelance_marketplace.skills
 CREATE TABLE IF NOT EXISTS `skills` (
@@ -241,7 +291,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table freelance_marketplace.users: ~5 rows (approximately)
+-- Dumping data for table freelance_marketplace.users: ~4 rows (approximately)
 DELETE FROM `users`;
 INSERT INTO `users` (`id`, `username`, `display_name`, `wallet_address`, `role`, `email`, `password`, `created_at`, `updated_at`) VALUES
 	(2, 'alex', 'XerionV', NULL, 'freelancer', 'alex@gmail.com', '$2b$10$ZqcW4fVxI8nF4eRtRkUR8ubGwq7RiHHqIoNaoLied1TginwNYb2oa', '2025-06-01 13:29:47', '2025-06-01 14:45:06'),
@@ -263,6 +313,8 @@ CREATE TABLE IF NOT EXISTS `user_profiles` (
   `is_verified` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `hourly_rate` decimal(10,2) DEFAULT NULL,
+  `availability` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `user_profiles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -270,8 +322,8 @@ CREATE TABLE IF NOT EXISTS `user_profiles` (
 
 -- Dumping data for table freelance_marketplace.user_profiles: ~1 rows (approximately)
 DELETE FROM `user_profiles`;
-INSERT INTO `user_profiles` (`id`, `user_id`, `bio`, `profile_picture_url`, `experience_level`, `portfolio_url`, `rating`, `completed_jobs`, `is_verified`, `created_at`, `updated_at`) VALUES
-	(1, 7, '1', '1', 'beginner', '1', 0.00, 0, 0, '2025-06-01 16:09:52', '2025-06-01 16:11:52');
+INSERT INTO `user_profiles` (`id`, `user_id`, `bio`, `profile_picture_url`, `experience_level`, `portfolio_url`, `rating`, `completed_jobs`, `is_verified`, `created_at`, `updated_at`, `hourly_rate`, `availability`) VALUES
+	(1, 7, '15+ years in web3 developments', '/uploads/avatars/avatar_7_1748870028289.jpg', 'expert', 'www.link.com', 3.50, 0, 0, '2025-06-01 16:09:52', '2025-06-03 13:47:14', 1.00, 'Available');
 
 -- Dumping structure for table freelance_marketplace.user_skills
 CREATE TABLE IF NOT EXISTS `user_skills` (
@@ -284,10 +336,11 @@ CREATE TABLE IF NOT EXISTS `user_skills` (
   CONSTRAINT `user_skills_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table freelance_marketplace.user_skills: ~1 rows (approximately)
+-- Dumping data for table freelance_marketplace.user_skills: ~2 rows (approximately)
 DELETE FROM `user_skills`;
 INSERT INTO `user_skills` (`user_id`, `skill_id`, `created_at`) VALUES
-	(7, 41, '2025-06-01 16:11:52');
+	(7, 31, '2025-06-02 12:59:33'),
+	(7, 34, '2025-06-02 12:59:33');
 
 -- Dumping structure for table freelance_marketplace.votes
 CREATE TABLE IF NOT EXISTS `votes` (

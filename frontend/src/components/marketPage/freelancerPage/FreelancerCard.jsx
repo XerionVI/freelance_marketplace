@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent, Avatar, Typography, Chip, Stack, Button, Box, Rating } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import config from "../../../config";
 
 const FreelancerCard = ({ freelancer }) => (
     <Card
@@ -20,7 +21,12 @@ const FreelancerCard = ({ freelancer }) => (
     >
         <CardContent sx={{ display: "flex", alignItems: "center" }}>
             <Avatar
-                src={freelancer.avatar_url}
+                src={freelancer.avatar_url
+                  ? freelancer.avatar_url.startsWith("http")
+                    ? freelancer.avatar_url
+                    : `${config.API_BASE_URL}${freelancer.avatar_url}`
+                  : undefined
+                }
                 alt={freelancer.display_name}
                 sx={{ width: 64, height: 64, mr: 3, border: "2px solid #1976d2" }}
             />
@@ -35,6 +41,9 @@ const FreelancerCard = ({ freelancer }) => (
                 </Stack>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                     {freelancer.bio?.slice(0, 80) || "No bio provided."}
+                </Typography>
+                <Typography variant="body2" color="primary" sx={{ fontWeight: 500, mb: 0.5 }}>
+                    {freelancer.hourly_rate} ETH/hr
                 </Typography>
                 <Stack direction="row" spacing={2} alignItems="center">
                     <Rating value={freelancer.rating || 0} precision={0.1} readOnly size="small" />

@@ -33,7 +33,14 @@ const getStatusColor = (status) => {
 };
 
 const InfoPaper = ({ icon, label, value }) => (
-  <Paper elevation={3} sx={{ p: 2, display: "flex", alignItems: "center", mb: 2 }}>
+  <Paper elevation={3} sx={{
+    p: 2,
+    display: "flex",
+    alignItems: "center",
+    mb: 2,
+    borderRadius: 2,
+    background: "#f8fafc"
+  }}>
     {icon && <Box sx={{ mr: 2 }}>{icon}</Box>}
     <Box>
       <Typography variant="subtitle2" color="text.secondary">
@@ -47,7 +54,7 @@ const InfoPaper = ({ icon, label, value }) => (
 );
 
 const JobDetails = ({ jobDetails }) => (
-  <Card sx={{ mb: 4, p: 2, background: "#f8fafc" }}>
+  <Card sx={{ mb: 4, p: 2, background: "#f8fafc", borderRadius: 3, boxShadow: 2 }}>
     <CardContent>
       <Typography variant="h4" gutterBottom>
         <WorkIcon sx={{ mr: 1, verticalAlign: "middle" }} />
@@ -110,7 +117,14 @@ const JobDetails = ({ jobDetails }) => (
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: 2, display: "flex", alignItems: "center", mb: 2 }}>
+          <Paper elevation={3} sx={{
+            p: 2,
+            display: "flex",
+            alignItems: "center",
+            mb: 2,
+            borderRadius: 2,
+            background: "#f8fafc"
+          }}>
             <Box>
               <Typography variant="subtitle2" color="text.secondary">
                 Status :

@@ -10,7 +10,7 @@ function Layout({ account, token, onLogout, onProfile, children }) {
       <Box
         sx={{
           minHeight: "calc(100vh - 120px)", // Leaves space for header/footer
-          bgcolor: "background.default",
+          background: "linear-gradient(135deg, #667eea 0%, #ffffff 100%)",
           pt: { xs: 2, sm: 4 },
           pb: { xs: 2, sm: 4 },
         }}

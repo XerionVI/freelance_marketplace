@@ -9,7 +9,6 @@ function Footer() {
         color: "white",
         textAlign: "center",
         py: { xs: 2, sm: 3 },
-        mt: 4,
         boxShadow: "0 -2px 8px rgba(0,0,0,0.04)",
       }}
     >

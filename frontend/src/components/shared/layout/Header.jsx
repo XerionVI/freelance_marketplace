@@ -63,6 +63,7 @@ function Header({ account, token, onLogout }) {
     { label: "Transaction", to: "/transaction" },
     { label: "Browse Freelancers", to: "/freelancer-home" },
     { label: "Post a Job", to: "/post-job" },
+    { label: "Job Management", to: "/job-management" },
   ];
 
    const handleLogout = () => {

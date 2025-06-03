@@ -56,23 +56,9 @@ function App() {
       }
     }
   };
-
-  const fetchUserProfile = async () => {
-    if (!token) return;
-    try {
-      const response = await axios.get("http://localhost:5000/api/user/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUserProfile(response.data);
-    } catch (error) {
-      setUserProfile(null);
-    }
-  };
-
   useEffect(() => {
     if (token) {
       fetchUsername();
-      fetchUserProfile();
     }
   }, [account, token]);
 
@@ -80,14 +66,11 @@ function App() {
     localStorage.setItem("token", token);
     setToken(token);
     fetchUsername();
-    fetchUserProfile();
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
-    setUsername(null);
-    setUserProfile(null);
   };
 
   return (

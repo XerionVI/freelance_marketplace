@@ -6,6 +6,10 @@ import {
   CircularProgress,
   Modal,
   Typography,
+  Card,
+  CardContent,
+  Paper,
+  Stack,
 } from "@mui/material";
 import axios from "axios";
 import config from "../../config";
@@ -413,131 +417,159 @@ function JobDetailsPage({ account, token }) {
   }
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <Button
-        variant="outlined"
-        color="primary"
-        onClick={() => navigate(-1)}
-        sx={{ mb: 3 }}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        py: 4,
+      }}
+    >
+      <Card
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          p: { xs: 2, md: 4 },
+          borderRadius: 4,
+          boxShadow: "0 8px 32px rgba(31,38,135,0.15)",
+          background: "rgba(255,255,255,0.97)",
+        }}
       >
-        Back
-      </Button>
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => navigate(-1)}
+          sx={{ mb: 3 }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-
-      <JobDetails jobDetails={jobDetails} />
-      {/* --- Dispute Info --- */}
-      {dispute && (
-        <Box sx={{ mb: 2, p: 2, border: "1px solid #fbc02d", borderRadius: 2, background: "#fffde7" }}>
-          <Typography variant="subtitle1" color="warning.main">
-            Dispute Raised
-          </Typography>
-          <Typography variant="body2">
-            <strong>Description:</strong> {dispute.description}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Status:</strong> {dispute.resolved ? "Resolved" : "Open"}
-          </Typography>
-        </Box>
-      )}
-      {/* --- Raise Dispute Button --- */}
-      {(jobDetails.status === "Accepted" || jobDetails.status === "Completed") &&
-        (normalizedAccount.toLowerCase() === jobDetails.client.toLowerCase() ||
-          normalizedAccount.toLowerCase() === jobDetails.freelancer.toLowerCase()) &&
-        !dispute && (
-          <Button
-            variant="contained"
-            color="warning"
-            sx={{ mb: 2 }}
-            onClick={handleRaiseDispute}
+          Back
+        </Button>
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
           >
-            Raise Dispute
-          </Button>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+        <JobDetails jobDetails={jobDetails} />
+
+        {/* --- Dispute Info --- */}
+        {dispute && (
+          <Paper
+            sx={{
+              mb: 2,
+              p: 2,
+              border: "1px solid #fbc02d",
+              borderRadius: 2,
+              background: "#fffde7",
+            }}
+          >
+            <Typography variant="subtitle1" color="warning.main">
+              Dispute Raised
+            </Typography>
+            <Typography variant="body2">
+              <strong>Description:</strong> {dispute.description}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Status:</strong> {dispute.resolved ? "Resolved" : "Open"}
+            </Typography>
+          </Paper>
         )}
 
-      {jobDetails.status === "Pending" &&
-        account.toLowerCase() === jobDetails.freelancer.toLowerCase() && (
-          <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+        {/* --- Raise Dispute Button --- */}
+        {(jobDetails.status === "Accepted" ||
+          jobDetails.status === "Completed") &&
+          (normalizedAccount.toLowerCase() ===
+            jobDetails.client.toLowerCase() ||
+            normalizedAccount.toLowerCase() ===
+              jobDetails.freelancer.toLowerCase()) &&
+          !dispute && (
             <Button
               variant="contained"
-              color="primary"
-              onClick={handleAcceptJob}
+              color="warning"
+              sx={{ mb: 2 }}
+              onClick={handleRaiseDispute}
             >
-              Accept Job
+              Raise Dispute
             </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleDeclineJob}
-            >
-              Decline Job
-            </Button>
-          </Box>
-        )}
+          )}
 
-      {jobDetails.status === "Accepted" && (
-        <>
-          <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
-            {/* Show "Complete Job" button if the logged-in account is the freelancer */}
-            {normalizedAccount.toLowerCase() === jobDetails.freelancer.toLowerCase() && (
+        {/* --- Action Buttons --- */}
+        {jobDetails.status === "Pending" &&
+          account.toLowerCase() === jobDetails.freelancer.toLowerCase() && (
+            <Stack direction="row" spacing={2} sx={{ mb: 4 }}>
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleCompleteJob}
-                disabled={isLoading}
+                onClick={handleAcceptJob}
               >
-                {isLoading ? <CircularProgress size={24} /> : "Complete Job"}
+                Accept Job
               </Button>
-            )}
-
-            {/* Show "Approve Job" button if the logged-in account is the client */}
-            {normalizedAccount.toLowerCase() === jobDetails.client.toLowerCase() && (
               <Button
                 variant="contained"
-                color="success"
-                onClick={handleApproveJob}
-                disabled={isLoading}
+                color="error"
+                onClick={handleDeclineJob}
               >
-                {isLoading ? <CircularProgress size={24} /> : "Approve Job"}
+                Decline Job
               </Button>
-            )}
+            </Stack>
+          )}
 
-          </Box>
+        {jobDetails.status === "Accepted" && (
+          <>
+            <Stack direction="row" spacing={2} sx={{ mb: 4 }}>
+              {normalizedAccount.toLowerCase() ===
+                jobDetails.freelancer.toLowerCase() && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCompleteJob}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <CircularProgress size={24} /> : "Complete Job"}
+                </Button>
+              )}
+              {normalizedAccount.toLowerCase() ===
+                jobDetails.client.toLowerCase() && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={handleApproveJob}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <CircularProgress size={24} /> : "Approve Job"}
+                </Button>
+              )}
+            </Stack>
 
-          <UploadedFiles
-            jobFiles={jobFiles}
-            handleShowNotes={handleShowNotes}
-          />
+            <UploadedFiles
+              jobFiles={jobFiles}
+              handleShowNotes={handleShowNotes}
+            />
 
-          <UploadFileSection
-            handleFileUpload={handleFileUpload}
-            setFile={setFile}
-            message={message}
-          />
+            <UploadFileSection
+              handleFileUpload={handleFileUpload}
+              setFile={setFile}
+              message={message}
+            />
 
-          <NotesModal
-            show={showNotesModal}
-            onHide={() => setShowNotesModal(false)}
-            notes={notes}
-            newNote={newNote}
-            setNewNote={setNewNote}
-            handleAddNote={handleAddNote}
-          />
-        </>
-      )}
+            <NotesModal
+              show={showNotesModal}
+              onHide={() => setShowNotesModal(false)}
+              notes={notes}
+              newNote={newNote}
+              setNewNote={setNewNote}
+              handleAddNote={handleAddNote}
+            />
+          </>
+        )}
+      </Card>
     </Box>
   );
 }

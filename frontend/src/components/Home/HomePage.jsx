@@ -57,33 +57,44 @@ function HomePage({ onLogin, onRegister }) {
   return (
     <Box>
       {/* Hero Section */}
-      <Box sx={{ bgcolor: "#f8fafc", py: 8, textAlign: "center" }}>
+      <Box sx={{ py: 8, textAlign: "center" }}>
         <Container maxWidth="md">
-          <AnimatedLogo />
-          <Typography variant="h3" fontWeight="bold" gutterBottom>
-            Find top freelance talent for your next project
-          </Typography>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Connect with skilled professionals and get work done securely.
-          </Typography>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 4 }}>
-            <Button
-              variant="contained"
-              size="large"
-              color="primary"
-              onClick={() => navigate("/freelancer-home")}
-            >
-              Find Talent
-            </Button>
-            <Button variant="outlined" size="large" color="primary">
-              Find Work
-            </Button>
-          </Stack>
+          <Box
+            sx={{
+              background: "rgba(255,255,255,0.75)", // transparent white
+              borderRadius: 4,
+              boxShadow: "0 8px 32px rgba(31,38,135,0.18)", // soft shadow
+              px: { xs: 2, sm: 6 },
+              py: { xs: 4, sm: 6 },
+              mb: 2,
+              display: "inline-block",
+            }}
+          >
+            <AnimatedLogo />
+            <Typography variant="h3" fontWeight="bold" gutterBottom>
+              Find top freelance talent for your next project
+            </Typography>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Connect with skilled professionals and get work done securely.
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 4 }}>
+              <Button
+                variant="contained"
+                size="large"
+                color="primary"
+                onClick={() => navigate("/freelancer-home")}
+              >
+                Find Talent
+              </Button>
+              <Button variant="outlined" size="large" color="primary">
+                Find Work
+              </Button>
+            </Stack>
+          </Box>
         </Container>
       </Box>
-
       {/* Categories */}
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{py: 4 }}>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
           Categories
         </Typography>

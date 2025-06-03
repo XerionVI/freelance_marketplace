@@ -7,6 +7,8 @@ import JobDetailsPage from "../components/jobs/JobDetailsPage";
 import UserProfile from "../components/User/UserProfile";
 import FreelancerHome from "../components/marketPage/freelancerPage/FreelancerHome";
 import TransactionHome from "../components/transcation/TransactionHome";
+import JobManagementHome from "../components/jobs/JobManagement/JobManagementHome";
+
 // ...import other pages...
 
 function AppRoutes({ account, token, handleAuthSuccess, handleLogin, handleRegister }) {
@@ -18,8 +20,9 @@ function AppRoutes({ account, token, handleAuthSuccess, handleLogin, handleRegis
       <Route path="/job-details/:jobId" element={<JobDetailsPage account={account} token={token} />} />
       <Route path="/profile" element={<UserProfile />} />
       <Route path="/freelancer-home" element={<FreelancerHome account={account} token={token} />} />
-      <Route path="/users/:id/profile" element={<UserProfile />} />
+      <Route path="/users/:id/profile" element={<UserProfile account={account} />} />
       <Route path="/transaction" element={<TransactionHome account={account}/>} />
+      <Route path="/job-management" element={<JobManagementHome account={account} />} />
     </Routes>
   );
 }

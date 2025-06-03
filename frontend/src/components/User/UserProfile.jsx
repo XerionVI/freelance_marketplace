@@ -24,6 +24,8 @@ import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import axios from "axios";
 import UserModal from "./UserModal";
 import AvatarModal from "./AvatarModal";
+import HireModal from "./HireModal";
+
 import config from "../../config";
 
 import { useNavigate } from "react-router-dom";
@@ -34,7 +36,7 @@ const experienceLevels = [
   { value: "expert", label: "Expert" },
 ];
 
-const UserProfile = ({ profile: propProfile }) => {
+const UserProfile = ({ profile: propProfile, account}) => {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -51,6 +53,8 @@ const UserProfile = ({ profile: propProfile }) => {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarHover, setAvatarHover] = useState(false);
+  const [jobModalOpen, setJobModalOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const handleMessage = async () => {
@@ -279,6 +283,10 @@ const UserProfile = ({ profile: propProfile }) => {
               <WorkIcon sx={{ fontSize: 18, mr: 0.5, verticalAlign: "middle" }} />
               {profile.completed_jobs || 0} Completed Jobs
             </Typography>
+            {/* Hourly Rate */}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                <b>Hourly Rate:</b> {profile.hourly_rate} ETH
+              </Typography>
           </Box>
           {/* Action Buttons */}
           <Stack spacing={1}>
@@ -291,7 +299,7 @@ const UserProfile = ({ profile: propProfile }) => {
             >
               Message
             </Button>
-            <Button variant="outlined" color="success">
+            <Button variant="outlined" color="success" onClick={() => setJobModalOpen(true)}>
               Hire
             </Button>
             <Button variant="outlined" color="secondary" onClick={handleEdit}>
@@ -370,6 +378,14 @@ const UserProfile = ({ profile: propProfile }) => {
           />
         </>
       )}
+      {/* Job Creation Modal */}
+      <HireModal
+        open={jobModalOpen}
+        onClose={() => setJobModalOpen(false)}
+        freelancerAddress={profile.wallet_address}
+        account={account}
+        onJobCreated={() => setJobModalOpen(false)}
+      />
     </>
   );
 };

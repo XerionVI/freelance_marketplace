@@ -64,7 +64,7 @@ exports.getProfile = async (req, res) => {
       `SELECT 
         u.id, u.username, u.display_name, u.wallet_address, u.role, u.email,
         up.bio, up.profile_picture_url, up.experience_level, up.portfolio_url,
-        up.rating, up.completed_jobs, up.is_verified
+        up.rating, up.completed_jobs, up.is_verified, up.hourly_rate
       FROM users u
       LEFT JOIN user_profiles up ON u.id = up.user_id
       WHERE u.id = ?`,
@@ -103,6 +103,7 @@ exports.getProfile = async (req, res) => {
               rating: user.rating ? parseFloat(user.rating) : 0,
               completed_jobs: user.completed_jobs || 0,
               is_verified: !!user.is_verified,
+              hourly_rate: user.hourly_rate,
               skills: skills || [],
             };
 
@@ -124,7 +125,7 @@ exports.getPublicProfile = (req, res) => {
     `SELECT 
       u.id, u.username, u.display_name, u.wallet_address, u.role, u.email,
       up.bio, up.profile_picture_url, up.experience_level, up.portfolio_url,
-      up.rating, up.completed_jobs, up.is_verified
+      up.rating, up.completed_jobs, up.is_verified, up.hourly_rate
     FROM users u
     LEFT JOIN user_profiles up ON u.id = up.user_id
     WHERE u.id = ?`,
@@ -154,6 +155,7 @@ exports.getPublicProfile = (req, res) => {
             rating: user.rating ? parseFloat(user.rating) : 0,
             completed_jobs: user.completed_jobs || 0,
             is_verified: !!user.is_verified,
+            hourly_rate: user.hourly_rate,
             skills: skills || [],
           };
           res.json(profile);
@@ -255,12 +257,12 @@ exports.browseFreelancers = (req, res) => {
 
   // Skills filter (array or single)
   if (skills) {
-  const skillArr = Array.isArray(skills) ? skills : [skills];
-  if (skillArr.length > 0 && skillArr[0] !== "") {
-    where += ` AND s.name IN (${skillArr.map(() => "?").join(",")})`;
-    params.push(...skillArr);
+    const skillArr = Array.isArray(skills) ? skills : [skills];
+    if (skillArr.length > 0 && skillArr[0] !== "") {
+      where += ` AND s.name IN (${skillArr.map(() => "?").join(",")})`;
+      params.push(...skillArr);
+    }
   }
-}
 
   // Experience level
   if (experience) {
@@ -333,23 +335,23 @@ exports.browseFreelancers = (req, res) => {
   const paramsWithLimit = [...params, limit, offset];
 
   db.query(countSql, params, (err, countResult) => {
-  if (err) {
-    console.error("Count SQL error:", err);
-    return res.status(500).json({ msg: "Server error", error: err });
-  }
-  const total = countResult[0]?.total || 0;
-  const totalPages = Math.ceil(total / limit);
-
-  db.query(sql, paramsWithLimit, (err2, rows) => {
-    if (err2) {
-      console.error("Main SQL error:", err2);
-      return res.status(500).json({ msg: "Server error", error: err2 });
+    if (err) {
+      console.error("Count SQL error:", err);
+      return res.status(500).json({ msg: "Server error", error: err });
     }
-    const freelancers = rows.map(f => ({
-      ...f,
-      skills: f.skills ? f.skills.split(",").map(name => ({ name })) : [],
-    }));
-    res.json({ freelancers, totalPages });
+    const total = countResult[0]?.total || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    db.query(sql, paramsWithLimit, (err2, rows) => {
+      if (err2) {
+        console.error("Main SQL error:", err2);
+        return res.status(500).json({ msg: "Server error", error: err2 });
+      }
+      const freelancers = rows.map(f => ({
+        ...f,
+        skills: f.skills ? f.skills.split(",").map(name => ({ name })) : [],
+      }));
+      res.json({ freelancers, totalPages });
+    });
   });
-});
 };

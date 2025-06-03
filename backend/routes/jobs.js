@@ -13,6 +13,9 @@ router.get("/:jobId", authMiddleware, jobController.getJobById);
 // Add a new job
 router.post("/", authMiddleware, jobController.addJob);
 
+// add a new job with job details
+router.post("/createFull", authMiddleware, jobController.createJobWithDetails);
+
 // Add or update job details
 router.post("/details", authMiddleware, jobController.addOrUpdateJobDetails);
 router.patch("/:jobId", jobController.updateJobStatus);

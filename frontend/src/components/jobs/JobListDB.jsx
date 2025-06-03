@@ -22,6 +22,7 @@ function JobListDB({ account, filter }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [selectedJobDetails, setSelectedJobDetails] = useState({});
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
@@ -33,15 +34,18 @@ function JobListDB({ account, filter }) {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedJobId(null);
+    setSelectedJobDetails({});
   };
 
-  const handleAddDetails = (jobId) => {
+  const handleAddDetails = (jobId, details) => {
     setSelectedJobId(jobId);
+    setSelectedJobDetails(details || {});
     setShowModal(true);
   };
 
-  const handleEditDetails = (jobId) => {
+  const handleEditDetails = (jobId, details) => {
     setSelectedJobId(jobId);
+    setSelectedJobDetails(details || {});
     setShowModal(true);
   };
 
@@ -66,29 +70,8 @@ function JobListDB({ account, filter }) {
           "Wallet-Address": account,
         },
       });
-
-      const jobsData = response.data;
-
-      const jobsWithDetails = await Promise.all(
-        jobsData.map(async (job) => {
-          try {
-            const detailsResponse = await axios.get(
-              `${config.API_BASE_URL}/api/jobs/details/${job.job_id}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            return { ...job, hasDetails: true, details: detailsResponse.data };
-          } catch (error) {
-            console.warn(`No details found for jobId: ${job.job_id}`);
-            return { ...job, hasDetails: false };
-          }
-        })
-      );
-
-      setJobs(jobsWithDetails);
+      console.log("Jobs fetched from database:", response.data);
+      setJobs(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching jobs from database:", error);
     } finally {
@@ -101,7 +84,9 @@ function JobListDB({ account, filter }) {
   }, [account]);
 
   if (!account) {
-    return <Alert severity="warning">Please connect your wallet to view jobs.</Alert>;
+    return (
+      <Alert severity="warning">Please connect your wallet to view jobs.</Alert>
+    );
   }
 
   if (loading) {
@@ -135,6 +120,11 @@ function JobListDB({ account, filter }) {
               <TableCell>Freelancer</TableCell>
               <TableCell>Amount (ETH)</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Title</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>Deadline</TableCell>
+              <TableCell>Delivery Format</TableCell>
+              <TableCell>Timezone</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -143,33 +133,37 @@ function JobListDB({ account, filter }) {
               <TableRow key={job.job_id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{job.job_id}</TableCell>
-                <TableCell>{job.contractJobId ?? "-"}</TableCell> {/* Show dash if missing */}
+                <TableCell>{job.contractJobId ?? "-"}</TableCell>
                 <TableCell>{job.client}</TableCell>
                 <TableCell>{job.freelancer}</TableCell>
                 <TableCell>{job.amount}</TableCell>
                 <TableCell>{job.status}</TableCell>
+                <TableCell>{job.title || "-"}</TableCell>
+                <TableCell>{job.category_id || "-"}</TableCell>
+                <TableCell>{job.deadline || "-"}</TableCell>
+                <TableCell>{job.delivery_format || "-"}</TableCell>
+                <TableCell>{job.timezone || "-"}</TableCell>
                 <TableCell>
-                  {/* Show Details button accessible by both client and freelancer */}
-                  {(job.client.toLowerCase() === account.toLowerCase() ||
-                    job.freelancer.toLowerCase() === account.toLowerCase()) && (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        onClick={() => handleShowDetails(job.job_id)}
-                        sx={{ mr: 1 }}
-                      >
-                        Show Details
-                      </Button>
-                    )}
+                  {(job.client?.toLowerCase() === account.toLowerCase() ||
+                    job.freelancer?.toLowerCase() ===
+                      account.toLowerCase()) && (
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => handleShowDetails(job.job_id)}
+                      sx={{ mr: 1 }}
+                    >
+                      Show Details
+                    </Button>
+                  )}
 
-                  {/* Add/Edit Details buttons accessible only by the client */}
-                  {job.client.toLowerCase() === account.toLowerCase() && (
+                  {job.client?.toLowerCase() === account.toLowerCase() && (
                     <>
-                      {job.hasDetails ? (
+                      {job.job_details_id ? (
                         <Button
                           variant="outlined"
                           color="warning"
-                          onClick={() => handleEditDetails(job.job_id)}
+                          onClick={() => handleEditDetails(job.job_id, job)}
                           sx={{ mr: 1 }}
                         >
                           Edit Details
@@ -178,7 +172,7 @@ function JobListDB({ account, filter }) {
                         <Button
                           variant="outlined"
                           color="info"
-                          onClick={() => handleAddDetails(job.job_id)}
+                          onClick={() => handleAddDetails(job.job_id, job)}
                           sx={{ mr: 1 }}
                         >
                           Add Details
@@ -199,9 +193,7 @@ function JobListDB({ account, filter }) {
           open={showModal}
           onClose={handleCloseModal}
           jobId={selectedJobId}
-          existingDetails={
-            jobs.find((job) => job.job_id === selectedJobId)?.details || {}
-          }
+          existingDetails={selectedJobDetails}
         />
       )}
     </>

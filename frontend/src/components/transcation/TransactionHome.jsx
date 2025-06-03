@@ -23,18 +23,9 @@ const TransactionHome = ({ account }) => {
         centered
         sx={{ mb: 4 }}
       >
-        <Tab label="Create Job" value="createJob" />
-        <Tab label="Display Jobs" value="displayJobs" />
+        <Tab label="Your Jobs" value="displayJobs" />
         <Tab label="Disputes" value="disputes" />
       </Tabs>
-
-      {tabValue === "createJob" && (
-        <Grid container justifyContent="center">
-          <Grid item xs={12} md={8}>
-            <CreateJobForm account={account} />
-          </Grid>
-        </Grid>
-      )}
 
       {tabValue === "displayJobs" && (
         <Grid container spacing={4}>
