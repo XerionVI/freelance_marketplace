@@ -18,12 +18,31 @@ const statusTextColor = {
   Declined: "#721c24",
 };
 
+const fieldLabels = {
+  job_created_at: "Created Date",
+  created_at: "Created Date",
+  deadline: "Due Date",
+  amount: "Amount",
+  freelancer: "Freelancer",
+  client: "Client",
+  status: "Status",
+  title: "Title",
+};
+
 const JobManagementCard = ({ job }) => {
   const navigate = useNavigate();
 
   const handleViewDetails = () => {
     navigate(`/job-details/${job.job_id}`);
   };
+
+  // Define which fields to show and in what order
+  const fieldsToShow = [
+    job.job_created_at !== undefined ? "job_created_at" : "created_at",
+    "deadline",
+    "amount",
+    
+  ];
 
   return (
     <Box
@@ -41,17 +60,30 @@ const JobManagementCard = ({ job }) => {
         },
       }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        sx={{ mb: 3 }}
+      >
         <Box>
-          <Typography className="job-title" variant="h6" fontWeight={600}>{job.title || "-"}</Typography>
-          <Typography className="job-company" variant="body2" color="text.secondary">
-            {job.client || "-"}
+          <Typography className="job-title" variant="h6" fontWeight={600}>
+            {job.title || "-"}
+          </Typography>
+          <Typography className="job-title" variant="h8" fontWeight={500}>
+            {job.description || "-"}
           </Typography>
         </Box>
         <Box
-          className={`job-status status-${(job.status || "").toLowerCase().replace(" ", "-")}`}
+          className={`job-status status-${(job.status || "")
+            .toLowerCase()
+            .replace(" ", "-")}`}
           sx={{
-            px: 2, py: 0.5, borderRadius: 2, fontWeight: 500, fontSize: 13,
+            px: 2,
+            py: 0.5,
+            borderRadius: 2,
+            fontWeight: 500,
+            fontSize: 13,
             bgcolor: statusColor[job.status] || "#eee",
             color: statusTextColor[job.status] || "#333",
             textTransform: "uppercase",
@@ -60,26 +92,62 @@ const JobManagementCard = ({ job }) => {
           {job.status}
         </Box>
       </Stack>
-      <Box className="job-details" sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2,1fr)", md: "repeat(4,1fr)" }, gap: 2, mb: 2 }}>
-        <Box className="detail-item">
-          <Typography className="detail-label" variant="caption">Start Date</Typography>
-          <Typography className="detail-value" fontWeight={500}>{job.created_at ? new Date(job.created_at).toLocaleDateString() : "-"}</Typography>
-        </Box>
-        <Box className="detail-item">
-          <Typography className="detail-label" variant="caption">Due Date</Typography>
-          <Typography className="detail-value" fontWeight={500}>{job.deadline || "-"}</Typography>
-        </Box>
-        <Box className="detail-item">
-          <Typography className="detail-label" variant="caption">Amount</Typography>
-          <Typography className="detail-value" fontWeight={500}>{job.amount} ETH</Typography>
-        </Box>
-        <Box className="detail-item">
-          <Typography className="detail-label" variant="caption">Freelancer</Typography>
-          <Typography className="detail-value" fontWeight={500}>{job.freelancer || "-"}</Typography>
-        </Box>
+      <Box
+        className="job-details"
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2,1fr)",
+            md: "repeat(4,1fr)",
+          },
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        {fieldsToShow.map((field) =>
+          job[field] !== undefined && job[field] !== null ? (
+            <Box className="detail-item" key={field}>
+              <Typography className="detail-label" variant="caption">
+                {fieldLabels[field] || field}
+              </Typography>
+              <Typography className="detail-value" fontWeight={500}>
+                {field === "job_created_at" || field === "created_at"
+                  ? new Date(job[field]).toLocaleDateString()
+                  : field === "amount"
+                  ? `${job[field]} ETH`
+                  : job[field] || "-"}
+              </Typography>
+            </Box>
+          ) : null
+        )}
       </Box>
+      {/* New stack for client and freelancer */}
+      <Stack direction="column" spacing={1} sx={{ mb: 2 }}>
+        <Box>
+          <Typography className="detail-label" variant="caption">
+            Client Address
+          </Typography>
+          <Typography className="detail-value" fontWeight={500} sx={{ wordBreak: "break-all" }}>
+            {job.client || "-"}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography className="detail-label" variant="caption">
+            Freelancer Address
+          </Typography>
+          <Typography className="detail-value" fontWeight={500} sx={{ wordBreak: "break-all" }}>
+            {job.freelancer || "-"}
+          </Typography>
+        </Box>
+      </Stack>
       <Stack direction="row" spacing={1} className="job-actions" sx={{ mt: 1 }}>
-        <Button variant="contained" color="primary" sx={{ borderRadius: 2 }} onClick={handleViewDetails}>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ borderRadius: 2 }}
+          onClick={handleViewDetails}
+        >
           View Details
         </Button>
       </Stack>

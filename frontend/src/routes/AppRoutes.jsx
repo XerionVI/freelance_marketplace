@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import LandingPage from "../components/Home/LandingPage";
 import HomePage from "../components/Home/HomePage";
 import AuthForm from "../components/auth/AuthForm";
-import JobDetailsPage from "../components/jobs/JobDetailsPage";
+import JobDetailsPage from "../components/jobs/JobDetails/JobDetailsPage";
 import UserProfile from "../components/User/UserProfile";
 import FreelancerHome from "../components/marketPage/freelancerPage/FreelancerHome";
 import TransactionHome from "../components/transcation/TransactionHome";
@@ -22,7 +22,7 @@ function AppRoutes({ account, token, handleAuthSuccess, handleLogin, handleRegis
       <Route path="/freelancer-home" element={<FreelancerHome account={account} token={token} />} />
       <Route path="/users/:id/profile" element={<UserProfile account={account} />} />
       <Route path="/transaction" element={<TransactionHome account={account}/>} />
-      <Route path="/job-management" element={<JobManagementHome account={account} />} />
+      <Route path="/job-management" element={<JobManagementHome account={account} token={token} />} />
     </Routes>
   );
 }

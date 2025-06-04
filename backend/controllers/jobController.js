@@ -64,8 +64,9 @@ exports.getJobById = (req, res) => {
   }
 
   const query = `
-    SELECT j.job_id, j.contractJobId, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at,
-           jd.title AS jobTitle, jd.description
+    SELECT 
+      j.job_id, j.contractJobId, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at, j.voteable, j.job_type,
+      jd.title AS Jobtitle, jd.description, jd.category_id, jd.cover_letter, jd.deadline, jd.delivery_format, jd.timezone
     FROM jobs j
     LEFT JOIN job_details jd ON j.job_id = jd.job_id
     WHERE j.job_id = ? AND (j.client = ? OR j.freelancer = ?)
@@ -87,8 +88,15 @@ exports.getJobById = (req, res) => {
 
 exports.addJob = (req, res) => {
   const {
-    contractJobId, client, freelancer, amount, blockNumber, transactionHash,
-    status, voteable, job_type
+    contractJobId,
+    client,
+    freelancer,
+    amount,
+    blockNumber,
+    transactionHash,
+    status,
+    voteable,
+    job_type,
   } = req.body;
 
   if (typeof contractJobId !== "number" || isNaN(contractJobId)) {
@@ -120,7 +128,7 @@ exports.addJob = (req, res) => {
       transactionHash,
       status || "Pending",
       voteable ? 1 : 0,
-      job_type || "ClientToFreelancer"
+      job_type || "ClientToFreelancer",
     ],
     (err, result) => {
       if (err) {
@@ -131,7 +139,7 @@ exports.addJob = (req, res) => {
       res.status(201).send({
         jobId: result.insertId,
         contractJobId,
-        message: "Job added successfully."
+        message: "Job added successfully.",
       });
     }
   );
@@ -140,8 +148,13 @@ exports.addJob = (req, res) => {
 // Add or update job details
 exports.addOrUpdateJobDetails = (req, res) => {
   const {
-    jobId, title, description, categoryId,
-    deadline, deliveryFormat, timezone
+    jobId,
+    title,
+    description,
+    categoryId,
+    deadline,
+    deliveryFormat,
+    timezone,
   } = req.body;
 
   if (!jobId || !title || !description) {
@@ -165,7 +178,15 @@ exports.addOrUpdateJobDetails = (req, res) => {
       `;
       db.query(
         updateQuery,
-        [title, description, categoryId, deadline, deliveryFormat, timezone, jobId],
+        [
+          title,
+          description,
+          categoryId,
+          deadline,
+          deliveryFormat,
+          timezone,
+          jobId,
+        ],
         (err) => {
           if (err) {
             console.error("Error updating job details:", err);
@@ -182,7 +203,15 @@ exports.addOrUpdateJobDetails = (req, res) => {
       `;
       db.query(
         insertQuery,
-        [jobId, title, description, categoryId, deadline, deliveryFormat, timezone],
+        [
+          jobId,
+          title,
+          description,
+          categoryId,
+          deadline,
+          deliveryFormat,
+          timezone,
+        ],
         (err) => {
           if (err) {
             console.error("Error inserting job details:", err);
@@ -197,13 +226,24 @@ exports.addOrUpdateJobDetails = (req, res) => {
 
 exports.createJobWithDetails = (req, res) => {
   const {
-    contractJobId, client, freelancer, amount, blockNumber, transactionHash,
-    status, voteable, job_type,
-    title, description, categoryId, deadline, deliveryFormat, timezone
+    contractJobId,
+    client,
+    freelancer,
+    amount,
+    blockNumber,
+    transactionHash,
+    status,
+    voteable,
+    job_type,
+    title,
+    description,
+    categoryId,
+    deadline,
+    deliveryFormat,
+    timezone,
   } = req.body;
 
-
-  db.beginTransaction(err => {
+  db.beginTransaction((err) => {
     if (err) {
       console.error("Error starting transaction:", err);
       return res.status(500).send("Error starting transaction.");
@@ -225,7 +265,7 @@ exports.createJobWithDetails = (req, res) => {
         transactionHash,
         status || "Pending",
         voteable ? 1 : 0,
-        job_type || "ClientToFreelancer"
+        job_type || "ClientToFreelancer",
       ],
       (err, jobResult) => {
         if (err) {
@@ -244,7 +284,15 @@ exports.createJobWithDetails = (req, res) => {
         `;
         db.query(
           detailsQuery,
-          [jobId, title, description, categoryId, deadline, deliveryFormat, timezone],
+          [
+            jobId,
+            title,
+            description,
+            categoryId,
+            deadline,
+            deliveryFormat,
+            timezone,
+          ],
           (err) => {
             if (err) {
               return db.rollback(() => {
@@ -253,7 +301,7 @@ exports.createJobWithDetails = (req, res) => {
               });
             }
 
-            db.commit(err => {
+            db.commit((err) => {
               if (err) {
                 return db.rollback(() => {
                   console.error("Error committing transaction:", err);
@@ -263,7 +311,7 @@ exports.createJobWithDetails = (req, res) => {
               res.status(201).send({
                 jobId,
                 contractJobId,
-                message: "Job and details added successfully."
+                message: "Job and details added successfully.",
               });
             });
           }
@@ -303,7 +351,13 @@ exports.updateJobStatus = (req, res) => {
   }
 
   // Validate the status value
-  const validStatuses = ["Pending", "Accepted", "Completed", "Disputed", "Declined"];
+  const validStatuses = [
+    "Pending",
+    "Accepted",
+    "Completed",
+    "Disputed",
+    "Declined",
+  ];
   if (!validStatuses.includes(status)) {
     return res.status(400).send("Invalid status value.");
   }

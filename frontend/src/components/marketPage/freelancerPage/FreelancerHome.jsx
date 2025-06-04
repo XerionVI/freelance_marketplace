@@ -18,7 +18,7 @@ const FreelancerHome = ({ token, account }) => {
     axios
       .get(`${config.API_BASE_URL}/api/users/browse`, {
         params: { ...filters, sort, page },
-        headers: { Authorization: `Bearer ${token}` }, // <-- Add this line
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setFreelancers(res.data.freelancers);
@@ -28,16 +28,28 @@ const FreelancerHome = ({ token, account }) => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+        {/* Sidebar with sticky position */}
+        <Box
+          sx={{
+            width: 320,
+            flexShrink: 0,
+            position: "sticky",
+            top: 32,
+            alignSelf: "flex-start",
+            zIndex: 1,
+            height: "fit-content",
+          }}
+        >
           <FreelancerFilterSidebar filters={filters} setFilters={setFilters} />
-        </Grid>
-        <Grid item xs={12} md={9}>
+        </Box>
+        {/* Main content */}
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <FreelancerSortBar sort={sort} setSort={setSort} />
           <FreelancerList freelancers={freelancers} />
           <PaginationBar page={page} setPage={setPage} totalPages={totalPages} />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   );
 };

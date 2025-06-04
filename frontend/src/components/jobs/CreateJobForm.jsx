@@ -19,16 +19,11 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import TimezoneSelect from "react-timezone-select";
 import { format } from "date-fns";
+import categoryData from "../shared/jsonData/category.js"; // adjust path if needed
 
 import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
 import config from "../../config";
 
-const categories = [
-  { id: 1, name: "Web Development" },
-  { id: 2, name: "Design" },
-  { id: 3, name: "Writing" },
-  // ...add more as needed
-];
 const deliveryFormatOptions = [
   { value: ".pdf", label: "PDF (.pdf)" },
   { value: ".zip", label: "ZIP Archive (.zip)" },
@@ -53,7 +48,6 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
 
   const handleCreateJob = async () => {
     setIsLoading(true);
@@ -126,7 +120,8 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
           description,
           categoryId,
           deadline: deadline ? format(deadline, "yyyy-MM-dd") : null,
-          deliveryFormat: deliveryFormat === "other" ? deliveryFormatOther : deliveryFormat,
+          deliveryFormat:
+            deliveryFormat === "other" ? deliveryFormatOther : deliveryFormat,
           timezone: timezone || null,
         }),
       });
@@ -206,9 +201,9 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
           onChange={(e) => setCategoryId(e.target.value)}
           required
         >
-          {categories.map((cat) => (
+          {categoryData.map((cat) => (
             <MenuItem key={cat.id} value={cat.id}>
-              {cat.name}
+              {cat.category_name}
             </MenuItem>
           ))}
         </TextField>
