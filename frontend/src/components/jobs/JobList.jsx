@@ -13,7 +13,7 @@ import {
   Alert,
 } from "@mui/material";
 import { ethers } from "ethers";
-import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
+import { getFreelanceEscrowContract } from "../../utils/getContractInstance"; // updated import
 import AddressDetails from "../history/AddressDetails";
 
 function JobList({ account, filter }) {
@@ -40,7 +40,7 @@ function JobList({ account, filter }) {
         return;
       }
 
-      const contract = await getFreelanceEscrowContract(account);
+      const contract = await getFreelanceEscrowContract(); // updated: no account param needed
       if (!contract) {
         console.error("Contract not initialized.");
         setLoading(false);
@@ -107,7 +107,7 @@ function JobList({ account, filter }) {
     const setupEventListeners = async () => {
       if (!account) return;
 
-      contract = await getFreelanceEscrowContract(account);
+      contract = await getFreelanceEscrowContract(); // updated: no account param needed
       if (!contract) return;
 
       // Listen for JobCreated event

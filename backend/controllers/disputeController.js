@@ -1,4 +1,3 @@
-
 const mysql = require("mysql");
 
 // MySQL setup
@@ -10,116 +9,69 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME,
 });
 
-// Create a new dispute
 exports.createDispute = (req, res) => {
-  const { jobId, client, freelancer, description } = req.body;
-  console.log("Creating dispute with data:", { jobId, client, freelancer, description });
-  const query = `INSERT INTO disputes (job_id, client, freelancer, description, resolved) VALUES (?, ?, ?, ?, 0)`;
-  db.query(query, [jobId, client, freelancer, description], (err, result) => {
-    if (err) return res.status(500).send("Error creating dispute.");
-    res.status(200).json({ disputeId: result.insertId, jobId, client, freelancer, description, resolved: false });
-  });
+  const {
+    id, // disputeId from contract
+    job_id,
+    client_address,
+    freelancer_address,
+    amount_eth,
+    status,
+    dispute_reason,
+  } = req.body;
+
+  const query = `
+    INSERT INTO disputes (
+      id, job_id, client_address, freelancer_address, amount_eth, status, dispute_reason
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+  db.query(
+  query,
+  [id, job_id, client_address, freelancer_address, amount_eth, status, dispute_reason],
+  (err, result) => {
+    if (err) {
+      console.error("Error creating dispute:", err);
+      return res.status(500).send("Error creating dispute.");
+    }
+    res.status(200).json({
+      id,
+      job_id,
+      client_address,
+      freelancer_address,
+      amount_eth,
+      status,
+      dispute_reason,
+    });
+  }
+);
 };
 
-// Get all disputes (regardless of status)
+// Get all disputes
 exports.getAllDisputes = (req, res) => {
-  const query = `SELECT * FROM disputes ORDER BY dispute_id DESC`;
+  const query = `SELECT * FROM disputes ORDER BY created_at DESC`;
   db.query(query, (err, results) => {
     if (err) return res.status(500).send("Error fetching all disputes.");
     res.status(200).json(results);
   });
 };
 
-exports.getVoteableDisputes = (req, res) => {
-  const query = `SELECT * FROM disputes WHERE resolved = 0 ORDER BY dispute_id DESC`;
-  db.query(query, (err, results) => {
+// Get disputes by status (optional)
+exports.getDisputesByStatus = (req, res) => {
+  const { status } = req.params;
+  const query = `SELECT * FROM disputes WHERE status = ? ORDER BY created_at DESC`;
+  db.query(query, [status], (err, results) => {
     if (err) return res.status(500).send("Error fetching disputes.");
     res.status(200).json(results);
-    console.log("Voteable disputes:", results);
   });
 };
 
-
-// Get a dispute by contractJobId
-exports.getDisputeByContractJobId = (req, res) => {
-  const { contractJobId } = req.params;
-  const query = `SELECT * FROM disputes WHERE job_id = ? LIMIT 1`;
-  db.query(query, [contractJobId], (err, results) => {
-    if (err) return res.status(500).send("Error fetching dispute.");
-    if (results.length === 0) return res.status(404).send("No dispute found.");
-    res.status(200).json(results[0]);
-  });
-};
-
-// (Optional) Get all disputes for a user
-exports.getUserDisputes = (req, res) => {
-  const user = req.user.wallet; // or req.user.id
-  const query = `SELECT * FROM disputes WHERE client = ? OR freelancer = ?`;
-  db.query(query, [user, user], (err, results) => {
-    if (err) return res.status(500).send("Error fetching user disputes.");
-    res.status(200).json(results);
-  });
-};
-
-// (Optional) Get a dispute by its disputeId
+// Get a single dispute by id
 exports.getDisputeById = (req, res) => {
-  const { disputeId } = req.params;
-  const query = `SELECT * FROM disputes WHERE dispute_id = ?`;
-  db.query(query, [disputeId], (err, results) => {
+  const { id } = req.params;
+  const query = `SELECT * FROM disputes WHERE id = ? LIMIT 1`;
+  db.query(query, [id], (err, results) => {
     if (err) return res.status(500).send("Error fetching dispute.");
     if (results.length === 0) return res.status(404).send("No dispute found.");
     res.status(200).json(results[0]);
-  });
-};
-
-exports.markDisputeResolved = (req, res) => {
-  const { disputeId } = req.params;
-  const query = `UPDATE disputes SET resolved = 1 WHERE dispute_id = ?`;
-  db.query(query, [disputeId], (err, result) => {
-    if (err) {
-      console.error("Error marking dispute as resolved:", err);
-      return res.status(500).send("Error updating dispute.");
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).send("Dispute not found.");
-    }
-    res.status(200).send({ message: "Dispute marked as resolved." });
-  });
-};
-
-// Enable voting for a dispute (set resolved = 0)
-exports.enableVoting = (req, res) => {
-  const { disputeId } = req.params;
-  const query = `UPDATE disputes SET resolved = 0 WHERE dispute_id = ?`;
-  db.query(query, [disputeId], (err, result) => {
-    if (err) {
-      console.error("Error enabling voting:", err);
-      return res.status(500).send("Error enabling voting.");
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).send("Dispute not found.");
-    }
-    res.status(200).send({ message: "Voting enabled for this dispute." });
-  });
-};
-
-// Update arguments for a dispute
-exports.updateDisputeArguments = (req, res) => {
-  const { disputeId } = req.params;
-  const { client_argument, freelancer_argument } = req.body;
-  const query = `
-    UPDATE disputes
-    SET client_argument = ?, freelancer_argument = ?
-    WHERE dispute_id = ?
-  `;
-  db.query(query, [client_argument, freelancer_argument, disputeId], (err, result) => {
-    if (err) {
-      console.error("Error updating arguments:", err);
-      return res.status(500).send("Error updating arguments.");
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).send("Dispute not found.");
-    }
-    res.status(200).send({ message: "Arguments updated." });
   });
 };

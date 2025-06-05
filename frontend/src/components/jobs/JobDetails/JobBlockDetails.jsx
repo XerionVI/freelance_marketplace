@@ -16,7 +16,6 @@ import GroupIcon from "@mui/icons-material/Group";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import StarIcon from "@mui/icons-material/Star";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";

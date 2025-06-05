@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Tabs, Tab, Grid, Typography } from "@mui/material";
-import CreateJobForm from "../jobs/CreateJobForm";
 import JobListDB from "../jobs/JobListDB";
 import JobList from "../jobs/JobList";
-import DisputeHome from "../disputes/DisputeHome";
+// import DisputeHome from "../disputes/DisputeHome";
 
 const TransactionHome = ({ account }) => {
   const [tabValue, setTabValue] = useState("displayJobs");
@@ -40,13 +39,13 @@ const TransactionHome = ({ account }) => {
         </Grid>
       )}
 
-      {tabValue === "disputes" && (
+      {/* {tabValue === "disputes" && (
         <Grid container>
           <Grid item xs={12}>
             <DisputeHome account={account} />
           </Grid>
         </Grid>
-      )}
+      )} */}
     </>
   );
 };

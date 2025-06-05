@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import GavelIcon from "@mui/icons-material/Gavel";
+
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import logo from "../../../assets/chainGigs.png";
 import config from "../../../config";
@@ -64,6 +66,7 @@ function Header({ account, token, onLogout }) {
     { label: "Browse Freelancers", to: "/freelancer-home" },
     { label: "Post a Job", to: "/post-job" },
     { label: "Job Management", to: "/job-management" },
+    { label: "Disputes", to: "/disputes", icon: <GavelIcon fontSize="small" sx={{ mr: 1 }} /> },
   ];
 
    const handleLogout = () => {
@@ -97,34 +100,41 @@ function Header({ account, token, onLogout }) {
       </Box>
       {/* Navigation Links - stick to the left after logo */}
       <Box sx={{ display: "flex", alignItems: "center" }}>
-        {isMobile ? (
-          <>
-            <IconButton color="inherit" onClick={handleMenuOpen}>
-              <MenuIcon />
-            </IconButton>
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          {isMobile ? (
+            <>
+              <IconButton color="inherit" onClick={handleMenuOpen}>
+                <MenuIcon />
+              </IconButton>
+              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                {menuLinks.map((link) => (
+                  <MenuItem
+                    key={link.to}
+                    component={RouterLink}
+                    to={link.to}
+                    onClick={handleMenuClose}
+                  >
+                    {link.icon}
+                    {link.label}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          ) : (
+            <Stack direction="row" spacing={2}>
               {menuLinks.map((link) => (
-                <MenuItem
+                <Button
                   key={link.to}
+                  color="inherit"
                   component={RouterLink}
                   to={link.to}
-                  onClick={handleMenuClose}
+                  startIcon={link.icon}
                 >
                   {link.label}
-                </MenuItem>
+                </Button>
               ))}
-            </Menu>
-          </>
-        ) : (
-          <Stack direction="row" spacing={2}>
-            {menuLinks.map((link) => (
-              <Button key={link.to} color="inherit" component={RouterLink} to={link.to}>
-                {link.label}
-              </Button>
-            ))}
-          </Stack>
-        )}
-      </Box>
+            </Stack>
+          )}
+        </Box>
       {/* Spacer to push account/profile to the right */}
       <Box sx={{ flexGrow: 1 }} />
       {/* Account/Profile and Logout/Login on the far right */}

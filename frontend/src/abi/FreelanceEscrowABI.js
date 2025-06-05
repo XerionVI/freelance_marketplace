@@ -212,7 +212,7 @@ const FreelanceEscrowABI = [
       "name": "disputeResolution",
       "outputs": [
         {
-          "internalType": "contract VotingDisputeResolution",
+          "internalType": "contract DisputeResolution",
           "name": "",
           "type": "address"
         }
@@ -275,9 +275,9 @@ const FreelanceEscrowABI = [
           "type": "uint256"
         },
         {
-          "internalType": "string",
-          "name": "_description",
-          "type": "string"
+          "internalType": "uint256",
+          "name": "votingDuration",
+          "type": "uint256"
         }
       ],
       "name": "initiateDispute",

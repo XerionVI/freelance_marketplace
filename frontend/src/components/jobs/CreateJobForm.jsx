@@ -21,7 +21,8 @@ import TimezoneSelect from "react-timezone-select";
 import { format } from "date-fns";
 import categoryData from "../shared/jsonData/category.js"; // adjust path if needed
 
-import { getFreelanceEscrowContract } from "../../utils/getFreelanceEscrow";
+import { getFreelanceEscrowContract } from "../../utils/getContractInstance"; // updated import
+
 import config from "../../config";
 
 const deliveryFormatOptions = [
@@ -37,7 +38,7 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [voteable, setVoteable] = useState(false);
+
   const [deadline, setDeadline] = useState(null);
   const [deliveryFormat, setDeliveryFormat] = useState("");
   const [deliveryFormatOther, setDeliveryFormatOther] = useState("");
@@ -72,7 +73,7 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
       }
 
       // 1. Create the job on the blockchain (only necessary data)
-      const contract = await getFreelanceEscrowContract(account);
+      const contract = await getFreelanceEscrowContract(); // no account param needed
       const tx = await contract.createJob(freelancerAddress, {
         value: ethers.parseEther(amount),
       });
@@ -114,7 +115,7 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
           blockNumber: events[0].blockNumber,
           transactionHash: events[0].transactionHash,
           status: "Pending",
-          voteable,
+
           job_type: "ClientToFreelancer",
           title,
           description,
@@ -207,15 +208,6 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
             </MenuItem>
           ))}
         </TextField>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={voteable}
-              onChange={(e) => setVoteable(e.target.checked)}
-            />
-          }
-          label="Voteable"
-        />
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label="Deadline"

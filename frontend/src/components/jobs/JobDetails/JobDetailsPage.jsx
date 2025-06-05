@@ -42,7 +42,9 @@ import UploadFileSection from "../../files/UploadFileSection.jsx";
 import categoryData from "../../shared/jsonData/category.js";
 import JobBlockDetails from "./JobBlockDetails";
 
-import { getFreelanceEscrowContract } from "../../../utils/getFreelanceEscrow.js";
+import DisputeForm from "../../disputes/DisputeForm"; // Add this import at the top
+
+import { getFreelanceEscrowContract } from "../../../utils/getContractInstance"; // updated import
 import { ethers } from "ethers";
 import FreelanceEscrowABI from "../../../abi/FreelanceEscrowABI.js";
 
@@ -79,13 +81,12 @@ function JobDetailsPage({ account, token }) {
   //native variables
   const [jobDetails, setJobDetails] = useState(null);
   const [jobFiles, setJobFiles] = useState([]);
-  const [jobBlockData, setJobBlockData] = useState(null);
   const [file, setFile] = useState(null);
   const [notes, setNotes] = useState([]);
   const [message, setMessage] = useState("");
   const [newNote, setNewNote] = useState("");
-  const [dispute, setDispute] = useState(null);
   const [onChainJob, setOnChainJob] = useState(null);
+  const [disputeModalOpen, setDisputeModalOpen] = useState(false);
 
   //function state variables
   const [isLoading, setIsLoading] = useState(true);
@@ -193,7 +194,7 @@ function JobDetailsPage({ account, token }) {
       if (!blockModalOpen || !jobDetails?.contractJobId || !account) return;
       setOnChainLoading(true);
       try {
-        const contract = await getFreelanceEscrowContract(account);
+        const contract = await getFreelanceEscrowContract();
         const job = await contract.jobs(jobDetails.contractJobId);
         setOnChainJob({
           jobId: jobDetails.contractJobId,
@@ -306,7 +307,7 @@ function JobDetailsPage({ account, token }) {
   const handleAcceptJob = async () => {
     setIsLoading(true);
     try {
-      const contract = await getFreelanceEscrowContract(normalizedAccount);
+      const contract = await getFreelanceEscrowContract();
       const contractJobId = jobDetails.contractJobId;
       const tx = await contract.acceptJob(contractJobId);
       await tx.wait();
@@ -354,7 +355,7 @@ function JobDetailsPage({ account, token }) {
   const handleDeclineJob = async () => {
     setIsLoading(true);
     try {
-      const contract = await getFreelanceEscrowContract(normalizedAccount);
+      const contract = await getFreelanceEscrowContract();
       const contractJobId = jobDetails.contractJobId;
       const tx = await contract.declineJob(contractJobId);
       await tx.wait();
@@ -403,7 +404,7 @@ function JobDetailsPage({ account, token }) {
     setIsLoading(true);
     setMessage("");
     try {
-      const contract = await getFreelanceEscrowContract(normalizedAccount);
+      const contract = await getFreelanceEscrowContract();
       const contractJobId = jobDetails.contractJobId;
       const jobOnChain = await contract.getJobDetails(contractJobId);
       const tx = await contract.completeJob(contractJobId);
@@ -521,72 +522,8 @@ function JobDetailsPage({ account, token }) {
     }
   };
 
-  const handleRaiseDispute = async () => {
-    try {
-      const description = prompt("Describe the reason for the dispute:");
-      if (!description) return;
-
-      // 1. Call the smart contract to raise the dispute
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
-        config.CONTRACT_ADDRESS, // FreelanceEscrow contract address
-        FreelanceEscrowABI,
-        signer
-      );
-      // Call the contract function (adjust if your function signature is different)
-      const tx = await contract.initiateDispute(
-        jobDetails.contractJobId,
-        description
-      );
-      const receipt = await tx.wait();
-
-      // Get the disputeId from the event logs (assuming event DisputeInitiated(jobId, disputeId))
-      let disputeId = null;
-      for (const log of receipt.logs) {
-        try {
-          const parsed = contract.interface.parseLog(log);
-          if (parsed.name === "DisputeInitiated") {
-            disputeId = parsed.args.disputeId.toString();
-            break;
-          }
-        } catch (e) {}
-      }
-
-      if (!disputeId) {
-        alert(
-          "Dispute raised on-chain, but could not get disputeId from event."
-        );
-        return;
-      }
-
-      // 2. Save the dispute in your backend/database
-      const response = await axios.post(
-        `${config.API_BASE_URL}/api/disputes`,
-        {
-          jobId: jobDetails.contractJobId,
-          client: jobDetails.client,
-          freelancer: jobDetails.freelancer,
-          description,
-          disputeId, // Save the on-chain disputeId for mapping
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Wallet-Address": normalizedAccount,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        alert("Dispute raised successfully!");
-        setDispute(response.data);
-      }
-    } catch (error) {
-      alert("Error raising dispute.");
-      console.error(error);
-    }
-  };
+  const handleOpenDisputeModal = () => setDisputeModalOpen(true);
+  const handleCloseDisputeModal = () => setDisputeModalOpen(false);
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -877,7 +814,7 @@ function JobDetailsPage({ account, token }) {
               variant="outlined"
               color="error"
               startIcon={<ErrorOutline />}
-              onClick={handleRaiseDispute}
+              onClick={handleOpenDisputeModal}
             >
               Raise Dispute
             </Button>
@@ -899,6 +836,23 @@ function JobDetailsPage({ account, token }) {
             {snackbar.message}
           </Alert>
         </Snackbar>
+        {/* Dispute Modal */}
+        <DisputeForm
+          open={disputeModalOpen}
+          onClose={handleCloseDisputeModal}
+          jobDetails={jobDetails}
+          account={account}
+          token={token}
+          onDisputeRaised={() => {
+            setSnackbar({
+              open: true,
+              message: "Dispute raised successfully!",
+              severity: "success",
+            });
+            setDisputeModalOpen(false);
+          }}
+        />
+        {/* Job Block Details Modal */}
          <JobBlockDetails
           open={blockModalOpen}
           onClose={() => setBlockModalOpen(false)}
