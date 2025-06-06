@@ -16,6 +16,11 @@ router.get("/status/:status", auth, disputeController.getDisputesByStatus);
 //get a single dispute by id
 router.get("/:disputeId", auth, disputeController.getDisputeById);
 
+// Get all details for a specific job
+router.get("/details/:id", auth, disputeController.getDisputeDetails);
+
+// Update the status of a dispute
+router.patch("/update-status/:id", disputeController.updateDisputeStatus);
 // // Get a dispute by contractJobId (for a job)
 // router.get("/job/:contractJobId", auth, disputeController.getDisputeByContractJobId);
 

@@ -1,17 +1,9 @@
 const multer = require("multer"); // Add this line
-const mysql = require("mysql");
 const path = require("path");
 const fs = require("fs");
 
-
 // MySQL setup
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
+const db = require("../db"); // Adjust the path to your DB connection module
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({

@@ -1,15 +1,9 @@
-const mysql = require("mysql"); // Use promise version for async/await
+
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
+const db = require("../db");
 
 // Multer setup for avatar uploads
 const avatarStorage = multer.diskStorage({

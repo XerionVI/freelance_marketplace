@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Table, Button, Spinner, Modal } from "react-bootstrap";
 import { ethers } from "ethers";
 import VotingDisputeResolutionABI from "../../abi/VotingDisputeResolutionABI";
-import config from "../../config";
+import config from "../../../config";
 import axios from "axios";
-import FreelanceEscrowABI from "../../abi/FreelanceEscrowABI";
+import FreelanceEscrowABI from "../../../abi/FreelanceEscrowABI";
 import DisputeModal from "./DisputeModal";
 
 const ADMIN_ADDRESS = config.ADMIN_ADDRESS;

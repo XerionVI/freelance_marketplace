@@ -215,35 +215,35 @@ function JobDetailsPage({ account, token }) {
     fetchOnChainJob();
   }, [blockModalOpen, jobDetails?.contractJobId, account]);
 
-  // Fetch dispute only after jobDetails is loaded and has contractJobId
-  useEffect(() => {
-    const fetchDispute = async () => {
-      if (!jobDetails || !jobDetails.contractJobId) {
-        setDispute(null);
-        return;
-      }
-      try {
-        const response = await axios.get(
-          `${config.API_BASE_URL}/api/disputes/job/${jobDetails.contractJobId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Wallet-Address": account,
-            },
-          }
-        );
-        if (response.status === 200 && response.data) {
-          setDispute(response.data);
-        } else {
-          setDispute(null);
-        }
-      } catch (error) {
-        setDispute(null);
-      }
-    };
+  // // Fetch dispute only after jobDetails is loaded and has contractJobId
+  // useEffect(() => {
+  //   const fetchDispute = async () => {
+  //     if (!jobDetails || !jobDetails.contractJobId) {
+  //       setDispute(null);
+  //       return;
+  //     }
+  //     try {
+  //       const response = await axios.get(
+  //         `${config.API_BASE_URL}/api/disputes/job/${jobDetails.contractJobId}`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Wallet-Address": account,
+  //           },
+  //         }
+  //       );
+  //       if (response.status === 200 && response.data) {
+  //         setDispute(response.data);
+  //       } else {
+  //         setDispute(null);
+  //       }
+  //     } catch (error) {
+  //       setDispute(null);
+  //     }
+  //   };
 
-    fetchDispute();
-  }, [jobDetails, account, token]);
+  //   fetchDispute();
+  // }, [jobDetails, account, token]);
 
   const handleFileUpload = async (e) => {
     e.preventDefault();

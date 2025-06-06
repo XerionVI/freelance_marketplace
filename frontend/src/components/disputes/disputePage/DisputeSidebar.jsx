@@ -21,14 +21,6 @@ function DisputeSidebar({ tabCounts }) {
             </Box>
             <Box display="flex" justifyContent="space-between" width="100%">
               <Typography variant="body2" color="text.secondary">
-                Pending Admin Review
-              </Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {tabCounts.pending_admin}
-              </Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" width="100%">
-              <Typography variant="body2" color="text.secondary">
                 Resolved This Month
               </Typography>
               <Typography variant="body2" fontWeight="bold">

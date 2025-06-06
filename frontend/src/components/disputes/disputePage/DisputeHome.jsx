@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import DisputeList from "./DisputeList";
 import DisputeSidebar from "./DisputeSidebar";
-import DisputeDetailsModal from "./DisputeDetailsModal";
+import DisputeDetailsModal from "../disputeDetails/DisputeDetailsModal";
 import { ethers } from "ethers";
-import { getDisputeResolutionContract } from "../../utils/getContractInstance";
+import { getDisputeResolutionContract } from "../../../utils/getContractInstance";
 import { Box, Grid, Paper } from "@mui/material";
 
-function DisputeHome({ account }) {
+function DisputeHome({ account, token}) {
   const [disputes, setDisputes] = useState([]);
   const [selectedTab, setSelectedTab] = useState("all");
   const [selectedDispute, setSelectedDispute] = useState(null);
   const [loading, setLoading] = useState(false);
+
 
   const fetchDisputes = async () => {
     setLoading(true);
@@ -77,7 +78,6 @@ function DisputeHome({ account }) {
     all: disputes.length,
     open: disputes.filter((d) => d.status === "open").length,
     voting: disputes.filter((d) => d.status === "voting").length,
-    pending_admin: disputes.filter((d) => d.status === "pending_admin").length,
     resolved: disputes.filter((d) => d.status === "resolved").length,
   };
 
@@ -103,6 +103,8 @@ function DisputeHome({ account }) {
       <DisputeDetailsModal
         dispute={selectedDispute}
         onClose={() => setSelectedDispute(null)}
+        token={token}
+        account={account}
       />
     </Box>
   );

@@ -1,14 +1,6 @@
 // filepath: d:\Project TA\freelance_marketplace\backend\controllers\jobController.js
-const mysql = require("mysql");
-
 // MySQL setup
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
+const db = require("../db");
 
 // Fetch all jobs for the logged-in wallet address
 exports.getJobs = (req, res) => {

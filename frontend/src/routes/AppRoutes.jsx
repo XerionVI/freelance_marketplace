@@ -8,7 +8,7 @@ import UserProfile from "../components/User/UserProfile";
 import FreelancerHome from "../components/marketPage/freelancerPage/FreelancerHome";
 import TransactionHome from "../components/transcation/TransactionHome";
 import JobManagementHome from "../components/jobs/JobManagement/JobManagementHome";
-import DisputeHome from "../components/disputes/DisputeHome";
+import DisputeHome from "../components/disputes/disputePage/DisputeHome";
 
 // ...import other pages...
 
@@ -23,7 +23,7 @@ function AppRoutes({ account, token, handleAuthSuccess, handleLogin, handleRegis
       <Route path="/freelancer-home" element={<FreelancerHome account={account} token={token} />} />
       <Route path="/users/:id/profile" element={<UserProfile account={account} />} />
       <Route path="/transaction" element={<TransactionHome account={account}/>} />
-      <Route path="/disputes" element={<DisputeHome account={account} />} />
+      <Route path="/disputes" element={<DisputeHome account={account} token={token} />} />
       <Route path="/job-management" element={<JobManagementHome account={account} token={token} />} />
     </Routes>
   );
