@@ -21,6 +21,10 @@ router.get("/details/:id", auth, disputeController.getDisputeDetails);
 
 // Update the status of a dispute
 router.patch("/update-status/:id", disputeController.updateDisputeStatus);
+
+// Submit evidence for a dispute
+router.patch("/submit-evidence/:id", disputeController.submitEvidence);
+
 // // Get a dispute by contractJobId (for a job)
 // router.get("/job/:contractJobId", auth, disputeController.getDisputeByContractJobId);
 

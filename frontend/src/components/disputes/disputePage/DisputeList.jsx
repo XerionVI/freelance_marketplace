@@ -21,7 +21,11 @@ import {
   Person,
   Group,
 } from "@mui/icons-material";
-import { getDisputeResolutionContract, getVotingModuleContract } from "../../../utils/getContractInstance";
+import {
+  getDisputeResolutionContract,
+  getFreelanceEscrowContract,
+  getVotingModuleContract,
+} from "../../../utils/getContractInstance";
 import config from "../../../config";
 
 const statusMap = {
@@ -41,11 +45,6 @@ const statusMap = {
     icon: <CheckCircle fontSize="small" />,
   },
 };
-
-const getVotingPercentage = (votes, total) =>
-  total > 0 ? Math.round((votes / total) * 100) : 0;
-
-// ...existing imports...
 
 function DisputeList({
   disputes,
@@ -111,8 +110,10 @@ function DisputeList({
   function getVotePercentages(disputeId) {
     const votes = votesByDispute[disputeId] || [];
     const total = votes.length;
-    const clientVotes = votes.filter(v => v.choice === "client").length;
-    const freelancerVotes = votes.filter(v => v.choice === "freelancer").length;
+    const clientVotes = votes.filter((v) => v.choice === "client").length;
+    const freelancerVotes = votes.filter(
+      (v) => v.choice === "freelancer"
+    ).length;
     return {
       client: total > 0 ? Math.round((clientVotes / total) * 100) : 0,
       freelancer: total > 0 ? Math.round((freelancerVotes / total) * 100) : 0,
@@ -147,6 +148,41 @@ function DisputeList({
       alert("Voting enabled for this dispute!");
     } catch (err) {
       alert("Failed to enable voting: " + (err?.reason || err?.message || err));
+    }
+  };
+
+  const handleCloseDispute = async (disputeId) => {
+    if (!window.confirm("Are you sure you want to close this dispute?")) return;
+    try {
+      // 1. Call smart contract to resolve dispute
+      const contract = await getDisputeResolutionContract();
+      const tx = await contract.resolveDispute(disputeId);
+      await tx.wait();
+
+      // 2. Fetch winner address from contract
+      const disputeData = await contract.getDispute(disputeId);
+      const winnerAddress = disputeData[7]; // winner is the 8th return value
+
+      // 3. Update dispute status, resolved_at, and winner_address in backend
+      await fetch(
+        `${config.API_BASE_URL}/api/disputes/update-status/${disputeId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            status: "Resolved",
+            winner_address: winnerAddress,
+          }),
+        }
+      );
+
+      alert("Dispute resolved successfully!");
+      // Optionally: refresh disputes list here
+    } catch (err) {
+      alert("Failed to resolve dispute: " + (err?.message || err));
     }
   };
 
@@ -189,6 +225,22 @@ function DisputeList({
       alert("Vote submitted successfully!");
     } catch (err) {
       alert("Failed to submit vote: " + (err?.reason || err?.message || err));
+    }
+  };
+
+  const handleReleaseFunds = async (disputeId) => {
+    console.log("Releasing funds for dispute:", disputeId);
+    if (
+      !window.confirm("Are you sure you want to release funds to the winner?")
+    )
+      return;
+    try {
+      const contract = await getFreelanceEscrowContract();
+      const tx = await contract.releaseDisputedFunds(disputeId);
+      await tx.wait();
+      alert("Funds released successfully!");
+    } catch (err) {
+      alert("Failed to release funds: " + (err?.reason || err?.message || err));
     }
   };
 
@@ -312,9 +364,21 @@ function DisputeList({
                   </Box>
                 </Stack>
                 {/* Admin Actions */}
-                {dispute.status?.toLowerCase() === "open" && (
-                  <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                    {currentAccount === adminAddress && (
+                {dispute.status?.toLowerCase() === "open" &&
+                  currentAccount !== adminAddress && (
+                    <Typography variant="caption" color="warning.main">
+                      Waiting for admin to enable voting...
+                    </Typography>
+                  )}
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{ mt: 2, mb: 1 }}
+                  justifyContent="flex-end"
+                >
+                  {/* Enable Voting (admin only, open status) */}
+                  {dispute.status?.toLowerCase() === "open" &&
+                    currentAccount === adminAddress && (
                       <Button
                         variant="contained"
                         color="primary"
@@ -323,13 +387,36 @@ function DisputeList({
                         Enable Voting
                       </Button>
                     )}
-                    {currentAccount !== adminAddress && (
-                      <Typography variant="caption" color="warning.main">
-                        Waiting for admin to enable voting...
-                      </Typography>
+
+                  {/* Close Dispute (admin only, not resolved) */}
+                  {currentAccount === adminAddress &&
+                    dispute.status?.toLowerCase() !== "resolved" && (
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleCloseDispute(dispute.id)}
+                      >
+                        Close Dispute
+                      </Button>
                     )}
-                  </Stack>
-                )}
+
+                  {/* Release Funds (admin or winner, resolved) */}
+                  {dispute.status?.toLowerCase() === "resolved" &&
+                    dispute.fundsReleased !== true &&
+                    (currentAccount === adminAddress ||
+                      currentAccount ===
+                        (
+                          dispute.winner_address || dispute.winner
+                        )?.toLowerCase()) && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => handleReleaseFunds(dispute.id)}
+                      >
+                        Release Funds
+                      </Button>
+                    )}
+                </Stack>
                 {/* Voting Section */}
                 {(dispute.status?.toLowerCase() === "voting" ||
                   dispute.status?.toLowerCase() === "open" ||

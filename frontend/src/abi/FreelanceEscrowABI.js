@@ -368,6 +368,19 @@ const FreelanceEscrowABI = [
       "inputs": [
         {
           "internalType": "uint256",
+          "name": "jobId",
+          "type": "uint256"
+        }
+      ],
+      "name": "releaseDisputedFunds",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
           "name": "disputeId",
           "type": "uint256"
         }

@@ -70,12 +70,12 @@ const VotingModuleABI = [
         },
         {
           "internalType": "address",
-          "name": "",
+          "name": "client",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "",
+          "name": "freelancer",
           "type": "address"
         }
       ],

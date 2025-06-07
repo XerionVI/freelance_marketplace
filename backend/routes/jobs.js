@@ -24,4 +24,6 @@ router.patch("/:jobId", jobController.updateJobStatus);
 router.get("/details/:jobId", authMiddleware, jobController.getJobDetails);
 router.put("/details", authMiddleware, jobController.updateJobDetails);
 
+router.patch("/update-on-dispute/:jobId", jobController.updateJobOnDispute);
+
 module.exports = router;

@@ -36,6 +36,7 @@ function DisputeHome({ account, token}) {
       const disputesArr = [];
       for (let i = 0; i < disputeCount; i++) {
         const d = await contract.getDispute(i);
+        console.log("Dispute data:", d);
         const statusEnum = ["open", "voting", "resolved", "cancelled"];
         let statusValue = d[6];
         let statusIndex = typeof statusValue === "bigint" ? Number(statusValue) : statusValue;

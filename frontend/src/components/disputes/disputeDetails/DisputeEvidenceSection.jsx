@@ -12,6 +12,7 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import Link from "@mui/material/Link";
+import { getDisputeResolutionContract } from "../../../utils/getContractInstance";
 
 function DisputeEvidenceSection({
   disputeId,
@@ -45,14 +46,16 @@ function DisputeEvidenceSection({
   }
 
   const handleEvidenceUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !canUpload || !partyType) return;
-    setUploading(true);
+  const file = e.target.files[0];
+  if (!file || !canUpload || !partyType) return;
+  setUploading(true);
+  try {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("dispute_id", disputeId);
     formData.append("party_type", partyType);
 
+    // 1. Upload evidence to backend
     await fetch(`/api/evidence/upload`, {
       method: "POST",
       headers: {
@@ -61,9 +64,28 @@ function DisputeEvidenceSection({
       },
       body: formData,
     });
-    setUploading(false);
+
+    // 2. Call smart contract to update on-chain evidence status
+    const contract = await getDisputeResolutionContract();
+    const tx = await contract.submitEvidence(disputeId);
+    await tx.wait();
+
+    // 3. Update backend dispute evidence status
+    await fetch(`/api/disputes/submit-evidence/${disputeId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ party_type: partyType }), // "client" or "freelancer"
+    });
+
     onUploaded();
-  };
+  } catch (err) {
+    alert("Failed to upload evidence or update status: " + (err?.message || err));
+  }
+  setUploading(false);
+};
 
   return (
     <Stack spacing={3}>

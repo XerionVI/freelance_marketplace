@@ -83,6 +83,19 @@ export default function DisputeForm({
         }),
       });
 
+      await fetch(
+        `${config.API_BASE_URL}/api/jobs/update-on-dispute/${jobDetails.job_id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "Wallet-Address": account,
+          },
+          body: JSON.stringify({ on_dispute: 1 }),
+        }
+      );
+
       if (!response.ok) {
         setError("Failed to save dispute in database.");
         setLoading(false);

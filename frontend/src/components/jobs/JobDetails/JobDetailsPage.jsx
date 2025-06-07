@@ -133,6 +133,7 @@ function JobDetailsPage({ account, token }) {
             status,
             contractJobId,
             job_id,
+            on_dispute,
             created_at,
           } = response.data;
 
@@ -154,6 +155,7 @@ function JobDetailsPage({ account, token }) {
             status: status || "-",
             contractJobId: contractJobId,
             job_id: job_id || "-",
+            on_dispute: on_dispute,
           };
           setJobDetails(normalizedJobDetails);
         }
@@ -204,7 +206,7 @@ function JobDetailsPage({ account, token }) {
           status: Number(job.status),
           title: jobDetails.title,
           description: jobDetails.description,
-          deadline: jobDetails.deadline
+          deadline: jobDetails.deadline,
         });
       } catch (err) {
         setOnChainJob(null);
@@ -214,36 +216,6 @@ function JobDetailsPage({ account, token }) {
     };
     fetchOnChainJob();
   }, [blockModalOpen, jobDetails?.contractJobId, account]);
-
-  // // Fetch dispute only after jobDetails is loaded and has contractJobId
-  // useEffect(() => {
-  //   const fetchDispute = async () => {
-  //     if (!jobDetails || !jobDetails.contractJobId) {
-  //       setDispute(null);
-  //       return;
-  //     }
-  //     try {
-  //       const response = await axios.get(
-  //         `${config.API_BASE_URL}/api/disputes/job/${jobDetails.contractJobId}`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             "Wallet-Address": account,
-  //           },
-  //         }
-  //       );
-  //       if (response.status === 200 && response.data) {
-  //         setDispute(response.data);
-  //       } else {
-  //         setDispute(null);
-  //       }
-  //     } catch (error) {
-  //       setDispute(null);
-  //     }
-  //   };
-
-  //   fetchDispute();
-  // }, [jobDetails, account, token]);
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
@@ -553,7 +525,7 @@ function JobDetailsPage({ account, token }) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !jobDetails) {
     return (
       <Box sx={{ textAlign: "center", mt: 4 }}>
         <CircularProgress />
@@ -662,13 +634,13 @@ function JobDetailsPage({ account, token }) {
                 Total Budget
               </Typography>
               <Button
-            variant="outlined"
-            color="info"
-            sx={{ mt: 2 }}
-            onClick={() => setBlockModalOpen(true)}
-          >
-            View Blockchain Info
-          </Button>
+                variant="outlined"
+                color="info"
+                sx={{ mt: 2 }}
+                onClick={() => setBlockModalOpen(true)}
+              >
+                View Blockchain Info
+              </Button>
             </Box>
           </Stack>
         </Box>
@@ -764,60 +736,89 @@ function JobDetailsPage({ account, token }) {
             startIcon={<Edit />}
             color="primary"
             // onClick={handleEditJob}
+            disabled={!!jobDetails.on_dispute}
           >
             Edit Job (notfix)
           </Button>
           <Stack direction="row" spacing={2}>
-            {/* Conditional Action Buttons */}
-            {jobDetails.status === "Pending" && (
+            {/* If job is on dispute, show warning and disable all status update buttons */}
+            {!!jobDetails.on_dispute ? (
               <>
                 <Button
                   variant="contained"
-                  color="success"
-                  onClick={handleAcceptJob}
-                  disabled={isLoading}
+                  color="warning"
+                  disabled
+                  startIcon={<ErrorOutline />}
                 >
-                  Accept
+                  Job On Dispute
                 </Button>
                 <Button
                   variant="outlined"
                   color="error"
-                  onClick={handleDeclineJob}
-                  disabled={isLoading}
+                  startIcon={<ErrorOutline />}
+                  disabled
                 >
-                  Decline
+                  Raise Dispute
                 </Button>
               </>
+            ) : (
+              <>
+                {jobDetails.status === "Pending" &&
+                  account?.toLowerCase() !==
+                    jobDetails.client?.toLowerCase() && (
+                    <>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={handleAcceptJob}
+                        disabled={isLoading}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={handleDeclineJob}
+                        disabled={isLoading}
+                      >
+                        Decline
+                      </Button>
+                    </>
+                  )}
+                {jobDetails.status === "Accepted" && (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<CheckCircle />}
+                    onClick={handleCompleteJob}
+                    disabled={isLoading}
+                  >
+                    Complete
+                  </Button>
+                )}
+                {jobDetails.status === "Completed" && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleApproveJob}
+                    disabled={isLoading}
+                  >
+                    Approve
+                  </Button>
+                )}
+                {jobDetails.status !== "Pending" && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<ErrorOutline />}
+                    onClick={handleOpenDisputeModal}
+                    disabled={!!jobDetails.on_dispute}
+                  >
+                    Raise Dispute
+                  </Button>
+                )}
+              </>
             )}
-            {jobDetails.status === "Accepted" && (
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<CheckCircle />}
-                onClick={handleCompleteJob}
-                disabled={isLoading}
-              >
-                Complete
-              </Button>
-            )}
-            {jobDetails.status === "Completed" && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleApproveJob}
-                disabled={isLoading}
-              >
-                Approve
-              </Button>
-            )}
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<ErrorOutline />}
-              onClick={handleOpenDisputeModal}
-            >
-              Raise Dispute
-            </Button>
           </Stack>
         </Stack>
 
@@ -853,7 +854,7 @@ function JobDetailsPage({ account, token }) {
           }}
         />
         {/* Job Block Details Modal */}
-         <JobBlockDetails
+        <JobBlockDetails
           open={blockModalOpen}
           onClose={() => setBlockModalOpen(false)}
           jobBlockData={onChainJob}

@@ -5,6 +5,11 @@ const DisputeResolutionABI = [
           "internalType": "address",
           "name": "_votingModule",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_escrowAddress",
+          "type": "address"
         }
       ],
       "stateMutability": "nonpayable",
@@ -256,6 +261,19 @@ const DisputeResolutionABI = [
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "escrowAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -346,6 +364,30 @@ const DisputeResolutionABI = [
       "inputs": [
         {
           "internalType": "uint256",
+          "name": "disputeId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getDisputeStatusAndWinner",
+      "outputs": [
+        {
+          "internalType": "enum DisputeResolution.DisputeStatus",
+          "name": "",
+          "type": "uint8"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
           "name": "jobId",
           "type": "uint256"
         }
@@ -393,7 +435,20 @@ const DisputeResolutionABI = [
           "type": "uint256"
         }
       ],
-      "name": "releaseFunds",
+      "name": "resolveDispute",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_escrowAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setEscrowAddress",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -406,7 +461,7 @@ const DisputeResolutionABI = [
           "type": "uint256"
         }
       ],
-      "name": "resolveDispute",
+      "name": "setFundsReleased",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

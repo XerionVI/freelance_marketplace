@@ -101,10 +101,28 @@ exports.getDisputeDetails = (req, res) => {
 
 exports.updateDisputeStatus = (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, winner_address } = req.body;
 
-  const query = `UPDATE disputes SET status = ?, voting_started_at = NOW() WHERE id = ?`;
-  db.query(query, [status, id], (err, result) => {
+  let query, params;
+
+  if (status === "Resolved") {
+    // For resolved, update status, resolved_at, and winner_address
+    if (!winner_address) {
+      return res.status(400).json({ message: "winner_address is required when resolving." });
+    }
+    query = `UPDATE disputes SET status = ?, resolved_at = NOW(), winner_address = ? WHERE id = ?`;
+    params = [status, winner_address, id];
+  } else if (status === "Voting") {
+    // For voting, update status and voting_started_at
+    query = `UPDATE disputes SET status = ?, voting_started_at = NOW() WHERE id = ?`;
+    params = [status, id];
+  } else {
+    // For other statuses, just update status
+    query = `UPDATE disputes SET status = ? WHERE id = ?`;
+    params = [status, id];
+  }
+
+  db.query(query, params, (err, result) => {
     if (err) {
       console.error("Error updating dispute status:", err);
       return res.status(500).json({ message: "Error updating dispute status." });
@@ -112,6 +130,32 @@ exports.updateDisputeStatus = (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Dispute not found." });
     }
-    res.status(200).json({ message: "Dispute status updated successfully.", id, status });
+    res.status(200).json({ message: "Dispute status updated successfully.", id, status, winner_address });
+  });
+};
+
+exports.submitEvidence = (req, res) => {
+  const { id } = req.params; // dispute id
+  const { party_type } = req.body; // "client" or "freelancer"
+
+  if (!["client", "freelancer"].includes(party_type)) {
+    return res.status(400).json({ message: "Invalid party_type." });
+  }
+
+  const field =
+    party_type === "client"
+      ? "client_evidence_submitted"
+      : "freelancer_evidence_submitted";
+
+  const query = `UPDATE disputes SET ${field} = 1 WHERE id = ?`;
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error("Error updating evidence status:", err);
+      return res.status(500).json({ message: "Error updating evidence status." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Dispute not found." });
+    }
+    res.status(200).json({ message: `${party_type} evidence status updated.` });
   });
 };

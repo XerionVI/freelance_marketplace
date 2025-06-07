@@ -20,7 +20,7 @@ exports.getJobs = (req, res) => {
       j.blockNumber,
       j.transactionHash,
       j.created_at AS job_created_at,
-      j.voteable,
+      j.on_dispute,
       j.job_type,
       jd.job_details_id,
       jd.title,
@@ -57,7 +57,7 @@ exports.getJobById = (req, res) => {
 
   const query = `
     SELECT 
-      j.job_id, j.contractJobId, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at, j.voteable, j.job_type,
+      j.job_id, j.contractJobId, j.client, j.freelancer, j.amount, j.status, j.blockNumber, j.transactionHash, j.created_at, j.on_dispute, j.job_type,
       jd.title AS Jobtitle, jd.description, jd.category_id, jd.cover_letter, jd.deadline, jd.delivery_format, jd.timezone
     FROM jobs j
     LEFT JOIN job_details jd ON j.job_id = jd.job_id
@@ -87,7 +87,7 @@ exports.addJob = (req, res) => {
     blockNumber,
     transactionHash,
     status,
-    voteable,
+    on_dispute,
     job_type,
   } = req.body;
 
@@ -105,7 +105,7 @@ exports.addJob = (req, res) => {
   }
 
   const query = `
-    INSERT INTO jobs (contractJobId, client, freelancer, amount, blockNumber, transactionHash, status, voteable, job_type)
+    INSERT INTO jobs (contractJobId, client, freelancer, amount, blockNumber, transactionHash, status, on_dispute, job_type)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
@@ -119,7 +119,7 @@ exports.addJob = (req, res) => {
       blockNumber,
       transactionHash,
       status || "Pending",
-      voteable ? 1 : 0,
+      on_dispute ? 1 : 0,
       job_type || "ClientToFreelancer",
     ],
     (err, result) => {
@@ -225,7 +225,7 @@ exports.createJobWithDetails = (req, res) => {
     blockNumber,
     transactionHash,
     status,
-    voteable,
+    on_dispute,
     job_type,
     title,
     description,
@@ -243,7 +243,7 @@ exports.createJobWithDetails = (req, res) => {
 
     // 1. Insert into jobs
     const jobQuery = `
-      INSERT INTO jobs (contractJobId, client, freelancer, amount, blockNumber, transactionHash, status, voteable, job_type)
+      INSERT INTO jobs (contractJobId, client, freelancer, amount, blockNumber, transactionHash, status, on_dispute, job_type)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     db.query(
@@ -256,7 +256,7 @@ exports.createJobWithDetails = (req, res) => {
         blockNumber,
         transactionHash,
         status || "Pending",
-        voteable ? 1 : 0,
+        on_dispute ? 1 : 0,
         job_type || "ClientToFreelancer",
       ],
       (err, jobResult) => {
@@ -398,5 +398,26 @@ exports.updateJobDetails = (req, res) => {
 
       res.status(200).send("Job details updated successfully.");
     });
+  });
+};
+
+exports.updateJobOnDispute = (req, res) => {
+  const { jobId } = req.params;
+  const { on_dispute } = req.body;
+
+  if (typeof on_dispute === "undefined") {
+    return res.status(400).send("on_dispute value is required.");
+  }
+
+  const query = `UPDATE jobs SET on_dispute = ? WHERE job_id = ?`;
+  db.query(query, [on_dispute ? 1 : 0, jobId], (err, result) => {
+    if (err) {
+      console.error("Error updating on_dispute:", err);
+      return res.status(500).send("Error updating on_dispute.");
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Job not found.");
+    }
+    res.status(200).send({ message: "on_dispute updated successfully." });
   });
 };
