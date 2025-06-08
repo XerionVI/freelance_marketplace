@@ -349,3 +349,17 @@ exports.browseFreelancers = (req, res) => {
     });
   });
 };
+
+exports.getFreelancers = (req, res) => {
+  // Only fetch users with role 'freelancer'
+  db.query(
+    "SELECT id, username, display_name, wallet_address, email FROM users WHERE role = 'freelancer'",
+    (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Server error" });
+      }
+      res.json(results);
+    }
+  );
+};

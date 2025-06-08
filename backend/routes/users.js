@@ -10,6 +10,10 @@ router.put("/profile", auth, userController.updateProfile);
 //public profile route
 router.get("/:id/profile", userController.getPublicProfile);
 
+//freelancers routes
+router.get("/freelancers", userController.getFreelancers);
+
+
 //browser routes
 router.get("/browse", userController.browseFreelancers);
 

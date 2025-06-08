@@ -71,8 +71,21 @@ app.use("/api/conversations", conversationsRoutes);
 const evidenceRoutes = require("./routes/evidence");
 app.use("/api/evidence", evidenceRoutes);
 
+// Import and use arguments routes
 const argumentsRoutes = require("./routes/arguments");
 app.use("/api/arguments", argumentsRoutes);
+
+// Import and use listings routes
+const listingsRoutes = require("./routes/listings");  
+app.use("/api/listings", listingsRoutes);
+
+// Import and use applications routes
+const applicationsRoutes = require("./routes/applications");  
+app.use("/api/applications", applicationsRoutes);
+
+// Import and use categories routes
+const categoriesRoutes = require("./routes/categories");
+app.use("/api/categories", categoriesRoutes);
 
 // Serve uploads/works as static files
 app.use("/uploads/works", express.static(path.join(__dirname, "uploads/works")));
