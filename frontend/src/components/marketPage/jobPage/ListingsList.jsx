@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Stack, Card, Typography, LinearProgress, Chip } from "@mui/material";
 import ListingCard from "./ListingCard";
+import ListingDetails from "./ListingDetails";
+import ApplicationForms from "./ApplicationForms";
 import config from "../../../config";
 
 function ListingsList({
@@ -8,9 +10,14 @@ function ListingsList({
   loading,
   onSelectListing,
   selectedListingId,
+  account,
+  token,
 }) {
   const [categories, setCategories] = useState([]);
   const [skills, setSkills] = useState([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [applicationOpen, setApplicationOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
 
   useEffect(() => {
     fetch(`${config.API_BASE_URL}/api/categories`)
@@ -22,6 +29,24 @@ function ListingsList({
       .then(setSkills)
       .catch(() => setSkills([]));
   }, []);
+
+  const handleOpenDetails = (listing) => {
+    setSelectedListing(listing);
+    setDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+    setSelectedListing(null);
+  };
+
+  const handleOpenApplication = () => {
+    setApplicationOpen(true);
+  };
+
+  const handleCloseApplication = () => {
+    setApplicationOpen(false);
+  };
 
   return (
     <>
@@ -52,6 +77,9 @@ function ListingsList({
             onSelect={() => onSelectListing(listing)}
             categories={categories}
             skills={skills}
+            account={account}
+            token={token}
+            onOpenDetails={handleOpenDetails}
           />
         ))}
         {!loading && listings.length === 0 && (
@@ -62,6 +90,25 @@ function ListingsList({
           </Card>
         )}
       </Stack>
+
+      <ListingDetails
+        open={detailsOpen}
+        onClose={handleCloseDetails}
+        listing={selectedListing}
+        account={account}
+        token={token}
+        categories={categories}
+        skills={skills}
+        onApply={handleOpenApplication}
+      />
+
+      <ApplicationForms
+        open={applicationOpen}
+        onClose={handleCloseApplication}
+        listing={selectedListing}
+        account={account}
+        token={token}
+      />
     </>
   );
 }

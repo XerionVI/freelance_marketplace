@@ -1,18 +1,25 @@
 import React from "react";
-import { Card, CardContent, Typography, Chip, Stack, Tooltip } from "@mui/material";
+import { Card, CardContent, Typography, Chip, Stack, Tooltip, Button } from "@mui/material";
 
 // Helper to shorten Ethereum address
 const shortenAddress = (addr) =>
   addr ? addr.slice(0, 6) + "..." + addr.slice(-4) : "";
 
-function ListingCard({ listing, selected, onSelect, categories = [], skills = [] }) {
-  // Find category name if categories prop is provided
+function ListingCard({
+  listing,
+  selected,
+  onSelect,
+  categories = [],
+  skills = [],
+  account,
+  token,
+  onOpenDetails,
+}) {
   const categoryName =
     categories.find((cat) => String(cat.id) === String(listing.category_id))?.name ||
     listing.category_id ||
     "-";
 
-  // Map skill IDs to skill names
   const skillNames = (listing.required_skills || "")
     .split(",")
     .filter((s) => s)
@@ -87,6 +94,18 @@ function ListingCard({ listing, selected, onSelect, categories = [], skills = []
           {skillNames.map((skill, idx) => (
             <Chip key={idx} label={skill} size="small" variant="outlined" />
           ))}
+        </Stack>
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDetails && onOpenDetails(listing);
+            }}
+          >
+            Details
+          </Button>
         </Stack>
       </CardContent>
     </Card>

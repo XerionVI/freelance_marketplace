@@ -11,13 +11,19 @@ import {
   Stack,
 } from "@mui/material";
 import config from "../../../config";
+import { jwtDecode } from "jwt-decode";
 
 export default function ApplicationForms({ open, onClose, listing, account, token, onApplied }) {
   const [coverLetter, setCoverLetter] = useState("");
   const [proposedAmount, setProposedAmount] = useState("");
+  const [attachment, setAttachment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const handleFileChange = (e) => {
+    setAttachment(e.target.files[0]);
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -29,19 +35,30 @@ export default function ApplicationForms({ open, onClose, listing, account, toke
       return;
     }
     try {
+      // Decode token to get user id
+      const decoded = jwtDecode(token);
+      const user_id = decoded?.user?.id;
+      if (!user_id) {
+        setError("Could not determine user ID from token.");
+        setLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("listing_id", listing.listing_id);
+      formData.append("freelancer_address", account);
+      formData.append("cover_letter", coverLetter);
+      formData.append("proposed_amount", proposedAmount);
+      formData.append("user_id", user_id); // use decoded user id
+      if (attachment) formData.append("attachment", attachment);
+
       const response = await fetch(`${config.API_BASE_URL}/api/applications`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           "Wallet-Address": account,
         },
-        body: JSON.stringify({
-          listing_id: listing.listing_id,
-          freelancer_address: account,
-          cover_letter: coverLetter,
-          proposed_amount: proposedAmount,
-        }),
+        body: formData,
       });
       if (!response.ok) {
         setError("Failed to submit application.");
@@ -51,6 +68,7 @@ export default function ApplicationForms({ open, onClose, listing, account, toke
       setSuccess("Application submitted!");
       setCoverLetter("");
       setProposedAmount("");
+      setAttachment(null);
       if (onApplied) onApplied(await response.json());
       onClose();
     } catch (err) {
@@ -84,6 +102,14 @@ export default function ApplicationForms({ open, onClose, listing, account, toke
             fullWidth
             required
           />
+          <Button variant="outlined" component="label">
+            {attachment ? attachment.name : "Upload Attachment"}
+            <input
+              type="file"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
           {error && <Alert severity="error">{error}</Alert>}
           {success && <Alert severity="success">{success}</Alert>}
         </Stack>

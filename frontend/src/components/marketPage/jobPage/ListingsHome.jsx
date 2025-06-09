@@ -111,6 +111,8 @@ function ListingsHome({ account, token }) {
                 setApplicationOpen(true);
               }}
               selectedListingId={selectedListing?.listing_id}
+              account={account}
+              token={token}
             />
             <ApplicationForms
               open={applicationOpen}
