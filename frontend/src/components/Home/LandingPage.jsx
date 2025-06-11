@@ -85,7 +85,7 @@ function LandingPage({ onLogin, onSignUp }) {
           How it Works
         </Typography>
         <Grid container spacing={4} justifyContent="center">
-          <Grid item xs={12} sm={4}>
+          <Grid >
             <Card elevation={2}>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="primary" fontWeight="bold">
@@ -98,7 +98,7 @@ function LandingPage({ onLogin, onSignUp }) {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid >
             <Card elevation={2}>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="primary" fontWeight="bold">
@@ -111,7 +111,7 @@ function LandingPage({ onLogin, onSignUp }) {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid >
             <Card elevation={2}>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="primary" fontWeight="bold">
@@ -146,7 +146,7 @@ function LandingPage({ onLogin, onSignUp }) {
         </Typography>
         <Grid container spacing={3}>
           {featuredFreelancers.map((f, idx) => (
-            <Grid item xs={12} sm={4} key={idx}>
+            <Grid key={idx}>
               <Card elevation={3} sx={{ textAlign: "center", p: 2 }}>
                 <Avatar src={f.avatar} sx={{ width: 64, height: 64, mx: "auto", mb: 1 }} />
                 <Typography variant="subtitle1" fontWeight="bold">
@@ -173,7 +173,7 @@ function LandingPage({ onLogin, onSignUp }) {
         </Typography>
         <Grid container spacing={3}>
           {testimonials.map((t, idx) => (
-            <Grid item xs={12} sm={6} key={idx}>
+            <Grid key={idx}>
               <Card elevation={1} sx={{ p: 2 }}>
                 <Typography variant="body1" sx={{ fontStyle: "italic" }}>
                   "{t.quote}"

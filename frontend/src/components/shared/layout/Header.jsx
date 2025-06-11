@@ -62,7 +62,7 @@ function Header({ account, token, onLogout }) {
 
   const menuLinks = [
     { label: "Home", to: "/home" },
-    { label: "Transaction", to: "/transaction" },
+    { label: "History", to: "/history" },
     { label: "Browse Freelancers", to: "/freelancer-home" },
     { label: "Browse Jobs", to: "/listings" },
     { label: "Job Management", to: "/job-management" },
@@ -78,7 +78,12 @@ function Header({ account, token, onLogout }) {
   const handleMenuClose = () => setAnchorEl(null);
 
   return (
-    <AppBar position="static" color="primary" elevation={2}>
+    <AppBar position="static"
+      sx={{
+        background: "#211C84",
+        boxShadow: 2,
+      }}
+      elevation={2}>
     <Toolbar sx={{ flexWrap: "wrap", px: { xs: 1, sm: 3 } }}>
       {/* Logo and Brand */}
       <Box sx={{ display: "flex", alignItems: "center", cursor: "pointer", mr: 2 }} onClick={() => navigate("/")}>

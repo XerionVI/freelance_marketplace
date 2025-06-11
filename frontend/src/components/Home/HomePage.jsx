@@ -112,7 +112,7 @@ function HomePage({ onLogin, onRegister }) {
         </Typography>
         <Grid container spacing={3}>
           {featuredFreelancers.map((f, idx) => (
-            <Grid item xs={12} sm={4} key={idx}>
+            <Grid key={idx}>
               <Card elevation={3} sx={{ textAlign: "center", p: 2 }}>
                 <Avatar src={f.avatar} sx={{ width: 64, height: 64, mx: "auto", mb: 1 }} />
                 <Typography variant="subtitle1" fontWeight="bold">

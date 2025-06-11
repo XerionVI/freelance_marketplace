@@ -5,7 +5,7 @@ function Footer() {
   return (
     <Box
       sx={{
-        bgcolor: "primary.main",
+        bgcolor: "#B5A8D5",
         color: "white",
         textAlign: "center",
         py: { xs: 2, sm: 3 },

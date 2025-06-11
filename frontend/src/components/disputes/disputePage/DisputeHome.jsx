@@ -85,7 +85,7 @@ function DisputeHome({ account, token}) {
   return (
     <Box sx={{ maxWidth: "1400px", mx: "auto", px: { xs: 1, sm: 3 }, py: 4 }}>
       <Grid container spacing={4} sx={{ minHeight: "70vh" }}>
-        <Grid item xs={12} md={8} sx={{ display: "flex", flexDirection: "column" }}>
+        <Grid sx={{ display: "flex", flexDirection: "column" }}>
           <Paper elevation={2} sx={{ p: { xs: 1, sm: 3 }, borderRadius: 3, flex: 1, display: "flex", flexDirection: "column" }}>
             <DisputeList
               disputes={disputes}
@@ -97,7 +97,7 @@ function DisputeHome({ account, token}) {
             />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <Grid sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <DisputeSidebar tabCounts={tabCounts} />
         </Grid>
       </Grid>

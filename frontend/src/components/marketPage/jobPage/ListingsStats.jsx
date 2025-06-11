@@ -23,21 +23,21 @@ const ListingsStats = ({ listingTotal, ethTotal }) => {
 
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
-      <Grid item xs={12} md={4}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <ListAltIcon color="primary" sx={{ fontSize: 32, mb: 1 }} />
           <Typography variant="h5" color="primary" fontWeight={700}>{listingTotal}</Typography>
           <Typography variant="body2">Total Listings</Typography>
         </Paper>
       </Grid>
-      <Grid item xs={12} md={4}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <PeopleIcon color="info" sx={{ fontSize: 32, mb: 1 }} />
           <Typography variant="h5" color="info.main" fontWeight={700}>{freelancerTotal}</Typography>
           <Typography variant="body2">Freelancers</Typography>
         </Paper>
       </Grid>
-      <Grid item xs={12} md={4}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <CurrencyEthereumIcon color="success" sx={{ fontSize: 32, mb: 1 }} />
           <Typography variant="h5" color="success.main" fontWeight={700}>{ethTotal}</Typography>

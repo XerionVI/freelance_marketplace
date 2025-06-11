@@ -45,25 +45,25 @@ const JobManagementStats = ({ account }) => {
 
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
-      <Grid item xs={6} md={3}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <Typography variant="h5" color="primary" fontWeight={700}>{stats.total}</Typography>
           <Typography variant="body2">Total Jobs</Typography>
         </Paper>
       </Grid>
-      <Grid item xs={6} md={3}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <Typography variant="h5" color="info.main" fontWeight={700}>{stats.inProgress}</Typography>
           <Typography variant="body2">In Progress</Typography>
         </Paper>
       </Grid>
-      <Grid item xs={6} md={3}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <Typography variant="h5" color="success.main" fontWeight={700}>{stats.completed}</Typography>
           <Typography variant="body2">Completed</Typography>
         </Paper>
       </Grid>
-      <Grid item xs={6} md={3}>
+      <Grid >
         <Paper elevation={3} sx={{ p: 2, borderRadius: 3, textAlign: "center" }}>
           <Typography variant="h5" color="warning.main" fontWeight={700}>{stats.pending}</Typography>
           <Typography variant="body2">Pending</Typography>
