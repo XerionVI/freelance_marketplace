@@ -76,19 +76,20 @@ function ListingsHome({ account, token }) {
               mr: { md: 3 },
             }}
           >
-            <ListingsSidebar
-              listings={listings}
-              onSelect={setSelectedListing}
-              onFilter={handleFilter}
-            />
             <Button
               variant="contained"
               color="primary"
               onClick={() => setListingFormOpen(true)}
-              sx={{ mt: 2, width: "100%" }}
+              sx={{ mb: 2, width: "100%" }}
             >
               Create Listing
             </Button>
+            <ListingsSidebar
+              listings={listings}
+              onSelect={setSelectedListing}
+              onFilter={handleFilter}
+              account={account}
+            />
             <ListingForm
               open={listingFormOpen}
               onClose={() => setListingFormOpen(false)}
@@ -120,6 +121,9 @@ function ListingsHome({ account, token }) {
               listing={selectedListing}
               account={account}
               token={token}
+              editMode={false} // Always create mode
+              initialValues={{}} // No initial values
+              applicationId={null} // No application id
             />
           </Box>
         </Box>

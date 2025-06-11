@@ -25,6 +25,8 @@ router.post(
 router.get("/listing/:listing_id", jobAppCtrl.getApplicationsForListing);
 router.get("/freelancer/:freelancer_address", jobAppCtrl.getApplicationsByFreelancer);
 
+router.put("/status/:application_id", jobAppCtrl.updateApplicationStatus);
+
 router.get("/download/:application_id", jobAppCtrl.downloadAttachment);
 
 router.put(

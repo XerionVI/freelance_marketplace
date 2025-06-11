@@ -16,11 +16,13 @@ import {
   InputAdornment,
   IconButton,
   OutlinedInput,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import config from "../../../config";
 
-function ListingsSidebar({ listings, onSelect, onFilter }) {
+function ListingsSidebar({ listings, onSelect, onFilter, account }) {
   // Filter state
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
@@ -30,6 +32,7 @@ function ListingsSidebar({ listings, onSelect, onFilter }) {
   const [categories, setCategories] = useState([]);
   const [skills, setSkills] = useState([]);
   const [budgetRange, setBudgetRange] = useState([0, 100]);
+  const [ownedOnly, setOwnedOnly] = useState(false);
 
   // Fetch categories and skills for filter dropdowns
   useEffect(() => {
@@ -86,12 +89,20 @@ function ListingsSidebar({ listings, onSelect, onFilter }) {
     const budgetValue = Number(listing.budget) || 0;
     const matchesBudget = budgetValue >= budget[0] && budgetValue <= budget[1];
 
+    // Owned listings filter
+    const matchesOwned =
+      !ownedOnly ||
+      (account &&
+        listing.client_address &&
+        account.toLowerCase() === listing.client_address.toLowerCase());
+
     return (
       matchesSearch &&
       matchesCategory &&
       matchesStatus &&
       matchesSkills &&
-      matchesBudget
+      matchesBudget &&
+      matchesOwned
     );
   });
 
@@ -99,7 +110,7 @@ function ListingsSidebar({ listings, onSelect, onFilter }) {
   useEffect(() => {
     if (onFilter) onFilter(filteredListings);
     // eslint-disable-next-line
-  }, [search, category, status, skill, budget, listings]);
+  }, [search, category, status, skill, budget, listings, ownedOnly, account]);
 
   return (
     <Paper
@@ -211,6 +222,18 @@ function ListingsSidebar({ listings, onSelect, onFilter }) {
           <MenuItem value="Hired">Hired</MenuItem>
         </Select>
       </FormControl>
+      {/* Owned Listings Filter */}
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={ownedOnly}
+            onChange={(e) => setOwnedOnly(e.target.checked)}
+            color="primary"
+          />
+        }
+        label="Show only my listings"
+        sx={{ mb: 2 }}
+      />
       {/* Filtered Listings */}
       <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>
         {filteredListings.length} Listings

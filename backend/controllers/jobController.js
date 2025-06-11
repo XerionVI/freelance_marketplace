@@ -233,6 +233,7 @@ exports.createJobWithDetails = (req, res) => {
     deadline,
     deliveryFormat,
     timezone,
+    cover_letter,
   } = req.body;
 
   db.beginTransaction((err) => {
@@ -271,8 +272,8 @@ exports.createJobWithDetails = (req, res) => {
 
         // 2. Insert into job_details
         const detailsQuery = `
-          INSERT INTO job_details (job_id, title, description, category_id, deadline, delivery_format, timezone)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO job_details (job_id, title, description, category_id, deadline, delivery_format, timezone, cover_letter)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         db.query(
           detailsQuery,
@@ -281,9 +282,10 @@ exports.createJobWithDetails = (req, res) => {
             title,
             description,
             categoryId,
-            deadline,
+            deadline, // this should now be a valid MySQL datetime string
             deliveryFormat,
             timezone,
+            cover_letter || null, // add cover_letter here
           ],
           (err) => {
             if (err) {

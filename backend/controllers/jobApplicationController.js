@@ -124,6 +124,23 @@ exports.deleteJobApplication = (req, res) => {
   );
 };
 
+
+exports.updateApplicationStatus = (req, res) => {
+  const { application_id } = req.params;
+  const { application_status } = req.body;
+  if (!application_id || !application_status) {
+    return res.status(400).json({ message: "Status or id is required" });
+  }
+  db.query(
+    "UPDATE job_applications SET application_status = ? WHERE application_id = ?",
+    [application_status, application_id],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "Error updating status" });
+      res.json({ message: "Status updated" });
+    }
+  );
+};
+
 const path = require("path");
 
 exports.previewAttachment = (req, res) => {

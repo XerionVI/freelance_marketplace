@@ -103,12 +103,15 @@ function ListingsList({
       />
 
       <ApplicationForms
-        open={applicationOpen}
-        onClose={handleCloseApplication}
-        listing={selectedListing}
-        account={account}
-        token={token}
-      />
+      open={applicationOpen}
+      onClose={handleCloseApplication}
+      listing={selectedListing}
+      account={account}
+      token={token}
+      editMode={false}
+      initialValues={{}}
+      applicationId={null}
+    />
     </>
   );
 }

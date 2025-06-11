@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,13 +13,29 @@ import {
 import config from "../../../config";
 import { jwtDecode } from "jwt-decode";
 
-export default function ApplicationForms({ open, onClose, listing, account, token, onApplied }) {
+export default function ApplicationForms({
+  open,
+  onClose,
+  listing,
+  account,
+  token,
+  onApplied,
+  editMode = false,
+  initialValues = {},
+  applicationId = null,
+}) {
   const [coverLetter, setCoverLetter] = useState("");
   const [proposedAmount, setProposedAmount] = useState("");
   const [attachment, setAttachment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    setCoverLetter(initialValues.cover_letter || "");
+    setProposedAmount(initialValues.proposed_amount || "");
+    setAttachment(null);
+  }, [initialValues, open]);
 
   const handleFileChange = (e) => {
     setAttachment(e.target.files[0]);
@@ -44,28 +60,47 @@ export default function ApplicationForms({ open, onClose, listing, account, toke
         return;
       }
 
-      const formData = new FormData();
-      formData.append("listing_id", listing.listing_id);
-      formData.append("freelancer_address", account);
-      formData.append("cover_letter", coverLetter);
-      formData.append("proposed_amount", proposedAmount);
-      formData.append("user_id", user_id); // use decoded user id
-      if (attachment) formData.append("attachment", attachment);
+      let response;
+      if (editMode && applicationId) {
+        // Edit mode: PUT request
+        const formData = new FormData();
+        formData.append("cover_letter", coverLetter);
+        formData.append("proposed_amount", proposedAmount);
+        if (attachment) formData.append("attachment", attachment);
 
-      const response = await fetch(`${config.API_BASE_URL}/api/applications`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Wallet-Address": account,
-        },
-        body: formData,
-      });
+        response = await fetch(`${config.API_BASE_URL}/api/applications/${applicationId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Wallet-Address": account,
+          },
+          body: formData,
+        });
+      } else {
+        // Create mode: POST request
+        const formData = new FormData();
+        formData.append("listing_id", listing.listing_id);
+        formData.append("freelancer_address", account);
+        formData.append("cover_letter", coverLetter);
+        formData.append("proposed_amount", proposedAmount);
+        formData.append("user_id", user_id); // use decoded user id
+        if (attachment) formData.append("attachment", attachment);
+
+        response = await fetch(`${config.API_BASE_URL}/api/applications`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Wallet-Address": account,
+          },
+          body: formData,
+        });
+      }
       if (!response.ok) {
         setError("Failed to submit application.");
         setLoading(false);
         return;
       }
-      setSuccess("Application submitted!");
+      setSuccess(editMode ? "Application updated!" : "Application submitted!");
       setCoverLetter("");
       setProposedAmount("");
       setAttachment(null);
@@ -83,7 +118,9 @@ export default function ApplicationForms({ open, onClose, listing, account, toke
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Apply for: {listing.title}</DialogTitle>
+      <DialogTitle>
+        {editMode ? "Edit Application" : `Apply for: ${listing.title}`}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField
@@ -122,7 +159,7 @@ export default function ApplicationForms({ open, onClose, listing, account, toke
           color="primary"
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : "Submit Application"}
+          {loading ? <CircularProgress size={24} /> : (editMode ? "Save Changes" : "Submit Application")}
         </Button>
       </DialogActions>
     </Dialog>
