@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Stack, Button, Chip, LinearProgress, Card, Typography } from "@mui/material";
+import {
+  Stack,
+  Button,
+  Chip,
+  LinearProgress,
+  Card,
+  Typography,
+} from "@mui/material";
 import DisputeCard from "./DisputeCard";
 import config from "../../../config";
 import {
@@ -71,7 +78,9 @@ function DisputeList({
     const votes = votesByDispute[disputeId] || [];
     const total = votes.length;
     const clientVotes = votes.filter((v) => v.choice === "client").length;
-    const freelancerVotes = votes.filter((v) => v.choice === "freelancer").length;
+    const freelancerVotes = votes.filter(
+      (v) => v.choice === "freelancer"
+    ).length;
     return {
       client: total > 0 ? Math.round((clientVotes / total) * 100) : 0,
       freelancer: total > 0 ? Math.round((freelancerVotes / total) * 100) : 0,
@@ -84,30 +93,45 @@ function DisputeList({
     return dispute.status?.toLowerCase() === selectedTab;
   });
 
-   // Enable voting handler (admin only)
+  // Enable voting handler (admin only)
   const handleEnableVoting = async (disputeId) => {
-    try {
-      const contract = await getDisputeResolutionContract();
-      const tx = await contract.startVoting(disputeId);
-      await tx.wait();
+  // Prompt admin for voting period in hours for easier input
+  const votingPeriodHours = window.prompt(
+    "Enter voting period in hours (e.g., 24 for 1 day):",
+    "24"
+  );
+  if (
+    !votingPeriodHours ||
+    isNaN(Number(votingPeriodHours)) ||
+    Number(votingPeriodHours) <= 0
+  ) {
+    alert("Invalid voting period.");
+    return;
+  }
+  // Convert hours to seconds for the contract call
+  const votingPeriodSeconds = Number(votingPeriodHours) * 3600;
+  try {
+    const contract = await getDisputeResolutionContract();
+    const tx = await contract.startVoting(disputeId, votingPeriodSeconds);
+    await tx.wait();
 
-      await fetch(
-        `${config.API_BASE_URL}/api/disputes/update-status/${disputeId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ status: "Voting" }),
-        }
-      );
+    await fetch(
+      `${config.API_BASE_URL}/api/disputes/update-status/${disputeId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ status: "Voting" }),
+      }
+    );
 
-      alert("Voting enabled for this dispute!");
-    } catch (err) {
-      alert("Failed to enable voting: " + (err?.reason || err?.message || err));
-    }
-  };
+    alert("Voting enabled for this dispute!");
+  } catch (err) {
+    alert("Failed to enable voting: " + (err?.reason || err?.message || err));
+  }
+};
 
   const handleCloseDispute = async (disputeId) => {
     if (!window.confirm("Are you sure you want to close this dispute?")) return;

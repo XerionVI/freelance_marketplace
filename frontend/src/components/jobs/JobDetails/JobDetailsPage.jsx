@@ -41,6 +41,7 @@ import UploadedFiles from "../../files/UploadedFiles.jsx";
 import UploadFileSection from "../../files/UploadFileSection.jsx";
 import categoryData from "../../shared/jsonData/category.js";
 import JobBlockDetails from "./JobBlockDetails";
+import JobActivityTimeLine from "./JobActivityTimeLine";
 
 import DisputeForm from "../../disputes/DisputeForm"; // Add this import at the top
 
@@ -427,11 +428,6 @@ function JobDetailsPage({ account, token }) {
     setIsLoading(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const balanceBefore = await provider.getBalance(jobDetails.freelancer);
-      console.log(
-        "Freelancer balance before:",
-        ethers.formatEther(balanceBefore)
-      );
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         config.CONTRACT_ADDRESS,
@@ -442,16 +438,11 @@ function JobDetailsPage({ account, token }) {
       // Use contractJobId for contract call
       const contractJobId = jobDetails.contractJobId;
       console.log("Approving job with contractJobId:", contractJobId);
-      const tx = await contract.approveJob(contractJobId);
-      await tx.wait();
-      const receipt = await tx.wait();
-      console.log("approve Recipt: ", receipt);
 
-      const balanceAfter = await provider.getBalance(jobDetails.freelancer);
-      console.log(
-        "Freelancer balance after:",
-        ethers.formatEther(balanceAfter)
-      );
+      const tx = await contract.approveJob(contractJobId);
+      const receipt = await tx.wait(); // Only wait ONCE
+
+      console.log("Transaction approve receipt:", receipt);
 
       // Update status in the database
       const response = await axios.patch(
@@ -471,13 +462,12 @@ function JobDetailsPage({ account, token }) {
         }));
         setSnackbar({
           open: true,
-          message: "Job approved and payment released successfully!",
+          message: "Job Approved and payment released successfully!",
           severity: "success",
         });
       }
     } catch (error) {
       console.error("Error approving job:", error);
-      // Try to extract a meaningful error message
       let errorMsg = "Error approving job. Please try again.";
       if (error && error.message) {
         if (error.shortMessage) {
@@ -657,7 +647,7 @@ function JobDetailsPage({ account, token }) {
           {/* Only show Files tab if status is NOT Pending */}
           {jobDetails.status !== "Pending" &&
             jobDetails.status !== "Declined" && <Tab label="Files" />}
-          <Tab label="Activity(Type 3)" />
+          <Tab label="Activity" />
         </Tabs>
 
         {/* Tab Content */}
@@ -693,33 +683,7 @@ function JobDetailsPage({ account, token }) {
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Activity Timeline
             </Typography>
-            {/* You can map your activity data here */}
-            <Stack spacing={3}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <CheckCircle color="success" />
-                <Box>
-                  <Typography fontWeight="bold">Job Accepted</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Freelancer accepted the job proposal
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    2 hours ago
-                  </Typography>
-                </Box>
-              </Stack>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Description color="primary" />
-                <Box>
-                  <Typography fontWeight="bold">Job Created</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Job posting was created and published
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    1 day ago
-                  </Typography>
-                </Box>
-              </Stack>
-            </Stack>
+            <JobActivityTimeLine contractJobId={jobDetails.contractJobId} />
           </Paper>
         )}
 
@@ -796,16 +760,19 @@ function JobDetailsPage({ account, token }) {
                     Complete
                   </Button>
                 )}
-                {jobDetails.status === "Completed" && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleApproveJob}
-                    disabled={isLoading}
-                  >
-                    Approve
-                  </Button>
-                )}
+                {jobDetails.status === "Completed" &&
+                  account &&
+                  account.toLowerCase() ===
+                    jobDetails.client?.toLowerCase() && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleApproveJob}
+                      disabled={isLoading}
+                    >
+                      Approve
+                    </Button>
+                  )}
                 {jobDetails.status !== "Pending" && (
                   <Button
                     variant="outlined"

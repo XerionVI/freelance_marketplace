@@ -351,6 +351,7 @@ exports.updateJobStatus = (req, res) => {
     "Completed",
     "Disputed",
     "Declined",
+    "Approved",
   ];
   if (!validStatuses.includes(status)) {
     return res.status(400).send("Invalid status value.");

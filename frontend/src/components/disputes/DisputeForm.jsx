@@ -14,8 +14,6 @@ import { ethers } from "ethers";
 import { getFreelanceEscrowContract } from "../../utils/getContractInstance";
 import config from "../../config";
 
-const VOTING_DURATION_SECONDS = 3 * 24 * 60 * 60; // 3 days
-
 export default function DisputeForm({
   open,
   onClose,
@@ -39,15 +37,12 @@ export default function DisputeForm({
         setLoading(false);
         return;
       }
-      // 1. Call the smart contract to raise the dispute
+      // 1. Call the FreelanceEscrow contract to initiate the dispute
       const contract = await getFreelanceEscrowContract();
-      const tx = await contract.initiateDispute(
-        jobDetails.contractJobId,
-        VOTING_DURATION_SECONDS
-      );
+      const tx = await contract.initiateDispute(jobDetails.contractJobId);
       const receipt = await tx.wait();
 
-      // 2. Get disputeId from event logs
+      // 2. Get disputeId from DisputeInitiated event logs
       let disputeId = null;
       for (const log of receipt.logs) {
         try {

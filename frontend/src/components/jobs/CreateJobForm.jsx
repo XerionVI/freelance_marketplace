@@ -73,28 +73,38 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
       }
 
       // 1. Create the job on the blockchain (only necessary data)
-      const contract = await getFreelanceEscrowContract(); // no account param needed
-      const tx = await contract.createJob(freelancerAddress, {
-        value: ethers.parseEther(amount),
-      });
+      const contract = await getFreelanceEscrowContract();
+      const tx = await contract.createJob(freelancerAddress, {value: ethers.parseEther(amount),});
       const receipt = await tx.wait();
 
-      // 2. Fetch the JobCreated event from the transaction receipt
-      const eventFilter = contract.filters.JobCreated();
-      const events = await contract.queryFilter(
-        eventFilter,
-        receipt.blockNumber,
-        "latest"
-      );
-      if (!events.length) {
-        setError("No JobCreated event found.");
+      // SAFELY extract jobId from JobCreated event in logs
+      let jobId = null, eventAmount = null, client = null, freelancer = null, blockNumber = null, transactionHash = null;
+      for (const log of receipt.logs) {
+        try {
+          const parsed = contract.interface.parseLog(log);
+          if (parsed.name === "JobCreated") {
+            jobId = parsed.args.jobId.toString();
+            client = parsed.args.client;
+            freelancer = parsed.args.freelancer;
+            eventAmount = parsed.args.amount;
+            blockNumber = log.blockNumber;
+            transactionHash = log.transactionHash;
+            break;
+          }
+        } catch (e) {
+          // Not the right event, skip
+        }
+      }
+
+      if (!jobId) {
+        setError("JobCreated event not found in transaction logs.");
         setIsLoading(false);
         return;
       }
-      const { jobId, client, freelancer, amount: eventAmount } = events[0].args;
+
       const contractJobId = Number(jobId);
 
-      // 3. Save the job and job_details to the database in one request
+      // 2. Save the job and job_details to the database in one request
       const token = localStorage.getItem("token");
       if (!token) {
         setError("User is not authenticated.");
@@ -112,8 +122,8 @@ function CreateJobForm({ account, freelancerAddress, onJobCreated, onClose }) {
           client: account,
           freelancer: freelancerAddress,
           amount: ethers.formatEther(eventAmount),
-          blockNumber: events[0].blockNumber,
-          transactionHash: events[0].transactionHash,
+          blockNumber,
+          transactionHash,
           status: "Pending",
 
           job_type: "ClientToFreelancer",

@@ -20,6 +20,19 @@ const DisputeResolutionABI = [
       "inputs": [
         {
           "indexed": true,
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "AdminTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "uint256",
           "name": "disputeId",
           "type": "uint256"
@@ -40,6 +53,12 @@ const DisputeResolutionABI = [
           "indexed": false,
           "internalType": "uint256",
           "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "jobId",
           "type": "uint256"
         }
       ],
@@ -65,6 +84,12 @@ const DisputeResolutionABI = [
           "indexed": false,
           "internalType": "uint256",
           "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "jobId",
           "type": "uint256"
         }
       ],
@@ -104,6 +129,12 @@ const DisputeResolutionABI = [
           "internalType": "address",
           "name": "party",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "jobId",
+          "type": "uint256"
         }
       ],
       "name": "EvidenceSubmitted",
@@ -129,10 +160,48 @@ const DisputeResolutionABI = [
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "jobId",
+          "type": "uint256"
         }
       ],
       "name": "FundsReleased",
       "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "disputeId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "votingEndTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "VotingEnabled",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     },
     {
       "inputs": [
@@ -149,11 +218,6 @@ const DisputeResolutionABI = [
         {
           "internalType": "uint256",
           "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "votingDuration",
           "type": "uint256"
         },
         {
@@ -472,6 +536,11 @@ const DisputeResolutionABI = [
           "internalType": "uint256",
           "name": "disputeId",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "votingPeriodSeconds",
+          "type": "uint256"
         }
       ],
       "name": "startVoting",
@@ -488,6 +557,19 @@ const DisputeResolutionABI = [
         }
       ],
       "name": "submitEvidence",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "transferAdmin",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

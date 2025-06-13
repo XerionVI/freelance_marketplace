@@ -1,5 +1,15 @@
 import { formatEther } from "ethers";
-import { getFreelanceEscrowContract, getDisputeResolutionContract } from "./getContractInstance";
+import {
+  getFreelanceEscrowContract,
+  getDisputeResolutionContract,
+} from "./getContractInstance";
+
+const DISPUTE_STATUS_MAP = {
+  0: "Open",
+  1: "Voting",
+  2: "Resolved",
+  3: "Cancelled",
+};
 
 // Helper to get block timestamp for each event
 async function addBlockTimestamp(provider, events) {
@@ -44,21 +54,27 @@ export async function fetchHistoryEvents() {
     jobCompleted,
     jobApproved,
     disputeInitiated,
+    disputeCreated,
     disputeStatusChanged,
+    votingEnabled,
     disputeResolved,
     fundsReleased,
     evidenceSubmitted,
+    disputeFundsReleased,
   ] = await Promise.all([
     escrow.queryFilter("JobCreated"),
     escrow.queryFilter("JobAccepted"),
     escrow.queryFilter("JobDeclined"),
     escrow.queryFilter("JobCompleted"),
     escrow.queryFilter("JobApproved"),
+    escrow.queryFilter("DisputeInitiated"),
     dispute.queryFilter("DisputeCreated"),
     dispute.queryFilter("DisputeStatusChanged"),
+    dispute.queryFilter("VotingEnabled"),
     dispute.queryFilter("DisputeResolved"),
     dispute.queryFilter("FundsReleased"),
     dispute.queryFilter("EvidenceSubmitted"),
+    escrow.queryFilter("DisputeFundsReleased"),
   ]);
 
   // Add block timestamps for sorting and display
@@ -69,15 +85,18 @@ export async function fetchHistoryEvents() {
     addBlockTimestamp(provider, jobCompleted),
     addBlockTimestamp(provider, jobApproved),
     addBlockTimestamp(provider, disputeInitiated),
+    addBlockTimestamp(provider, disputeCreated),
     addBlockTimestamp(provider, disputeStatusChanged),
+    addBlockTimestamp(provider, votingEnabled),
     addBlockTimestamp(provider, disputeResolved),
     addBlockTimestamp(provider, fundsReleased),
     addBlockTimestamp(provider, evidenceSubmitted),
+    addBlockTimestamp(provider, disputeFundsReleased),
   ]);
 
   // Map events to UI format
   const events = [
-    ...jobCreated.map(e => ({
+    ...jobCreated.map((e) => ({
       id: `job-${e.args.jobId.toString()}`,
       type: "job",
       title: "Job Created",
@@ -92,7 +111,7 @@ export async function fetchHistoryEvents() {
         block: "#" + e.blockNumber,
       },
     })),
-    ...jobAccepted.map(e => ({
+    ...jobAccepted.map((e) => ({
       id: `job-${e.args.jobId.toString()}-accepted`,
       type: "job",
       title: "Job Accepted",
@@ -100,12 +119,13 @@ export async function fetchHistoryEvents() {
       details: {
         jobId: "#" + e.args.jobId.toString(),
         freelancer: e.args.freelancer,
+        client: e.args.client,
         status: "accepted",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...jobDeclined.map(e => ({
+    ...jobDeclined.map((e) => ({
       id: `job-${e.args.jobId.toString()}-declined`,
       type: "job",
       title: "Job Declined",
@@ -113,12 +133,13 @@ export async function fetchHistoryEvents() {
       details: {
         jobId: "#" + e.args.jobId.toString(),
         freelancer: e.args.freelancer,
+        client: e.args.client,
         status: "declined",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...jobCompleted.map(e => ({
+    ...jobCompleted.map((e) => ({
       id: `job-${e.args.jobId.toString()}-completed`,
       type: "job",
       title: "Job Completed",
@@ -126,12 +147,13 @@ export async function fetchHistoryEvents() {
       details: {
         jobId: "#" + e.args.jobId.toString(),
         freelancer: e.args.freelancer,
+        client: e.args.client,
         status: "completed",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...jobApproved.map(e => ({
+    ...jobApproved.map((e) => ({
       id: `job-${e.args.jobId.toString()}-approved`,
       type: "payment",
       title: "Payment Released",
@@ -139,76 +161,135 @@ export async function fetchHistoryEvents() {
       details: {
         jobId: "#" + e.args.jobId.toString(),
         recipient: e.args.freelancer,
+        client: e.args.client,
         status: "approved",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...disputeInitiated.map(e => ({
-      id: `dispute-${e.args.disputeId.toString()}`,
+    ...disputeInitiated.map((e) => ({
+      id: `dispute-${(e.args?.disputeId ?? "unknown").toString()}`,
+      type: "dispute",
+      title: "Dispute Initiated",
+      time: new Date(e.blockTimestamp * 1000).toUTCString(),
+      details: {
+        jobId: "#" + (e.args?.jobId ?? "unknown").toString(),
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        client: e.args?.client ?? "",
+        freelancer: e.args?.freelancer ?? "",
+        amount: e.args?.amount ? `${formatEther(e.args.amount)} ETH` : "",
+        status: "initiated",
+        tx: e.transactionHash,
+        block: "#" + e.blockNumber,
+      },
+    })),
+    ...disputeCreated.map((e) => ({
+      id: `dispute-${(e.args?.disputeId ?? "unknown").toString()}-created`,
       type: "dispute",
       title: "Dispute Created",
       time: new Date(e.blockTimestamp * 1000).toUTCString(),
       details: {
-        jobId: "#" + e.args.jobId.toString(),
-        disputeId: "#" + e.args.disputeId.toString(),
-        client: e.args.client,
-        freelancer: e.args.freelancer,
-        amount: `${formatEther(e.args.amount)} ETH`,
-        status: "disputed",
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        client: e.args?.client ?? "",
+        freelancer: e.args?.freelancer ?? "",
+        amount: e.args?.amount ? `${formatEther(e.args.amount)} ETH` : "",
+        jobId: "#" + (e.args?.jobId ?? "unknown").toString(),
+        status: "open",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...disputeStatusChanged.map(e => ({
-      id: `dispute-${e.args.disputeId.toString()}-status`,
+    ...disputeStatusChanged.map((e) => ({
+      id: `dispute-${(e.args?.disputeId ?? "unknown").toString()}-status`,
       type: "dispute",
       title: "Dispute Status Changed",
       time: new Date(e.blockTimestamp * 1000).toUTCString(),
       details: {
-        disputeId: "#" + e.args.disputeId.toString(),
-        status: e.args.status.toString(),
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        status:
+          e.args?.status !== undefined
+            ? DISPUTE_STATUS_MAP[e.args.status.toString()] ||
+              e.args.status.toString()
+            : "",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...disputeResolved.map(e => ({
-      id: `dispute-${e.args.disputeId.toString()}-resolved`,
+    ...votingEnabled.map((e) => ({
+      id: `dispute-${(
+        e.args?.disputeId ?? "unknown"
+      ).toString()}-voting-enabled`,
+      type: "dispute",
+      title: "Voting Enabled",
+      time: new Date(e.blockTimestamp * 1000).toUTCString(),
+      details: {
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        votingEndTime: e.args?.votingEndTime
+          ? new Date(Number(e.args.votingEndTime) * 1000).toUTCString()
+          : undefined,
+        tx: e.transactionHash,
+        block: "#" + e.blockNumber,
+      },
+    })),
+    ...disputeResolved.map((e) => ({
+      id: `dispute-${(e.args?.disputeId ?? "unknown").toString()}-resolved`,
       type: "dispute",
       title: "Dispute Resolved",
       time: new Date(e.blockTimestamp * 1000).toUTCString(),
       details: {
-        disputeId: "#" + e.args.disputeId.toString(),
-        winner: e.args.winner,
-        amount: `${formatEther(e.args.amount)} ETH`,
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        winner: e.args?.winner ?? "",
+        amount: e.args?.amount ? `${formatEther(e.args.amount)} ETH` : "",
+        jobId: "#" + (e.args?.jobId ?? "unknown").toString(),
         status: "resolved",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...fundsReleased.map(e => ({
-      id: `dispute-${e.args.disputeId.toString()}-funds`,
+    ...fundsReleased.map((e) => ({
+      id: `dispute-${(e.args?.disputeId ?? "unknown").toString()}-funds`,
       type: "dispute",
       title: "Dispute Funds Released",
       time: new Date(e.blockTimestamp * 1000).toUTCString(),
       details: {
-        disputeId: "#" + e.args.disputeId.toString(),
-        recipient: e.args.recipient,
-        amount: `${formatEther(e.args.amount)} ETH`,
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        recipient: e.args?.recipient ?? "",
+        amount: e.args?.amount ? `${formatEther(e.args.amount)} ETH` : "",
+        jobId: "#" + (e.args?.jobId ?? "unknown").toString(),
         status: "fundsReleased",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
     })),
-    ...evidenceSubmitted.map(e => ({
-      id: `dispute-${e.args.disputeId.toString()}-evidence-${e.args.party}`,
+    ...evidenceSubmitted.map((e) => ({
+      id: `dispute-${(e.args?.disputeId ?? "unknown").toString()}-evidence-${
+        e.args?.party ?? "unknown"
+      }`,
       type: "dispute",
       title: "Evidence Submitted",
       time: new Date(e.blockTimestamp * 1000).toUTCString(),
       details: {
-        disputeId: "#" + e.args.disputeId.toString(),
-        party: e.args.party,
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        party: e.args?.party ?? "",
+        jobId: "#" + (e.args?.jobId ?? "unknown").toString(),
         status: "evidenceSubmitted",
+        tx: e.transactionHash,
+        block: "#" + e.blockNumber,
+      },
+    })),
+    ...disputeFundsReleased.map((e) => ({
+      id: `dispute-${(
+        e.args?.disputeId ?? "unknown"
+      ).toString()}-funds-released`,
+      type: "dispute",
+      title: "Dispute Funds Released",
+      time: new Date(e.blockTimestamp * 1000).toUTCString(),
+      details: {
+        disputeId: "#" + (e.args?.disputeId ?? "unknown").toString(),
+        recipient: e.args?.recipient ?? "",
+        amount: e.args?.amount ? `${formatEther(e.args.amount)} ETH` : "",
+        jobId: "#" + (e.args?.jobId ?? "unknown").toString(),
+        status: "fundsReleased",
         tx: e.transactionHash,
         block: "#" + e.blockNumber,
       },
@@ -216,14 +297,18 @@ export async function fetchHistoryEvents() {
   ];
 
   // Fetch gas info for each event and add to details
-  await Promise.all(events.map(async (event) => {
-    const gas = await getGasInfo(provider, event.details.tx);
-    if (gas) {
-      event.details.gas = `${gas.gasUsed} units | ${Number(gas.gasPrice) / 1e9} gwei | ${gas.fee} ETH`;
-    } else {
-      event.details.gas = "N/A";
-    }
-  }));
+  await Promise.all(
+    events.map(async (event) => {
+      const gas = await getGasInfo(provider, event.details.tx);
+      if (gas) {
+        event.details.gas = `${gas.gasUsed} units | ${
+          Number(gas.gasPrice) / 1e9
+        } gwei | ${gas.fee} ETH`;
+      } else {
+        event.details.gas = "N/A";
+      }
+    })
+  );
 
   // Sort by time descending
   return events.sort((a, b) => (a.time < b.time ? 1 : -1));
