@@ -226,7 +226,7 @@ export default function VisualAnalyticsDashboard({ events = [] }) {
       </Paper>
 
       {/* Dispute Resolution Funnel */}
-      <Paper className="chart-card" sx={{ p: 3, borderRadius: 3, mb: 4 }}>
+            <Paper className="chart-card" sx={{ p: 3, borderRadius: 3, mb: 4 }}>
         <Box className="chart-header" sx={{ display: "flex", alignItems: "center", mb: 2, pb: 1, borderBottom: "2px solid #f0f0f0" }}>
           <Box className="chart-icon" sx={{ fontSize: 24, mr: 1, p: 1, borderRadius: 1, background: "linear-gradient(45deg, #667eea, #764ba2)", color: "#fff" }}>⚖️</Box>
           <Typography className="chart-title" sx={{ fontSize: 18, fontWeight: 600, color: "#2c3e50" }}>Dispute Resolution Funnel</Typography>
@@ -240,6 +240,8 @@ export default function VisualAnalyticsDashboard({ events = [] }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            width: "100%",
+            // removed marginLeft and width
             clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
           }}>
             <span>Disputes Created</span>
@@ -250,11 +252,10 @@ export default function VisualAnalyticsDashboard({ events = [] }) {
             color: "#fff",
             p: 2,
             borderRadius: 2,
-            width: "80%",
-            marginLeft: "10%",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            width: "100%",
             clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
           }}>
             <span>Evidence Submitted</span>
@@ -265,11 +266,10 @@ export default function VisualAnalyticsDashboard({ events = [] }) {
             color: "#fff",
             p: 2,
             borderRadius: 2,
-            width: "60%",
-            marginLeft: "20%",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            width: "100%",
             clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
           }}>
             <span>Voting Started</span>
@@ -280,11 +280,10 @@ export default function VisualAnalyticsDashboard({ events = [] }) {
             color: "#fff",
             p: 2,
             borderRadius: 2,
-            width: "40%",
-            marginLeft: "30%",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            width: "100%",
             clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
           }}>
             <span>Resolved</span>

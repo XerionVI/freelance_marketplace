@@ -15,6 +15,11 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import GavelIcon from "@mui/icons-material/Gavel";
+import HomeIcon from "@mui/icons-material/Home";
+import HistoryIcon from "@mui/icons-material/History";
+import PeopleIcon from "@mui/icons-material/People";
+import WorkIcon from "@mui/icons-material/Work";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import logo from "../../../assets/chainGigs.png";
@@ -32,6 +37,8 @@ function getInitials(name, fallback = "U") {
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+// ...existing imports...
 
 function Header({ account, token, onLogout }) {
   const navigate = useNavigate();
@@ -60,16 +67,25 @@ function Header({ account, token, onLogout }) {
     : undefined;
   const displayName = profile?.display_name || profile?.username || "";
 
+  // Only show these links when logged in
   const menuLinks = [
-    { label: "Home", to: "/home" },
-    { label: "History", to: "/history" },
-    { label: "Browse Freelancers", to: "/freelancer-home" },
-    { label: "Browse Jobs", to: "/listings" },
-    { label: "Job Management", to: "/job-management" },
-    { label: "Disputes", to: "/disputes", icon: <GavelIcon fontSize="small" sx={{ mr: 1 }} /> },
-  ];
+  { label: "Home", to: "/home", icon: <HomeIcon fontSize="small" sx={{ mr: 1 }} /> },
+  ...(token
+    ? [
+        { label: "History", to: "/history", icon: <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> },
+        { label: "Browse Freelancers", to: "/freelancer-home", icon: <PeopleIcon fontSize="small" sx={{ mr: 1 }} /> },
+        { label: "Browse Jobs", to: "/listings", icon: <WorkIcon fontSize="small" sx={{ mr: 1 }} /> },
+        { label: "Job Management", to: "/job-management", icon: <AssignmentIcon fontSize="small" sx={{ mr: 1 }} /> },
+        {
+          label: "Disputes",
+          to: "/disputes",
+          icon: <GavelIcon fontSize="small" sx={{ mr: 1 }} />,
+        },
+      ]
+    : []),
+];
 
-   const handleLogout = () => {
+  const handleLogout = () => {
     onLogout();
     navigate("/auth");
   };
@@ -78,39 +94,58 @@ function Header({ account, token, onLogout }) {
   const handleMenuClose = () => setAnchorEl(null);
 
   return (
-    <AppBar position="static"
+    <AppBar
+      position="static"
       sx={{
         background: "#211C84",
         boxShadow: 2,
       }}
-      elevation={2}>
-    <Toolbar sx={{ flexWrap: "wrap", px: { xs: 1, sm: 3 } }}>
-      {/* Logo and Brand */}
-      <Box sx={{ display: "flex", alignItems: "center", cursor: "pointer", mr: 2 }} onClick={() => navigate("/")}>
-        <img
-          src={logo}
-          alt="Chain Gigs Logo"
-          style={{ width: 40, height: 40, marginRight: 12, borderRadius: "50%" }}
-        />
-        <Typography
-          variant="h6"
+      elevation={2}
+    >
+      <Toolbar sx={{ flexWrap: "wrap", px: { xs: 1, sm: 3 } }}>
+        {/* Logo and Brand */}
+        <Box
           sx={{
-            fontSize: { xs: "1rem", sm: "1.5rem" },
-            fontWeight: "bold",
-            letterSpacing: 1,
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            mr: 2,
           }}
+          onClick={() => navigate("/")}
         >
-          Chain Gigs
-        </Typography>
-      </Box>
-      {/* Navigation Links - stick to the left after logo */}
-      <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src={logo}
+            alt="Chain Gigs Logo"
+            style={{
+              width: 40,
+              height: 40,
+              marginRight: 12,
+              borderRadius: "50%",
+            }}
+          />
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: { xs: "1rem", sm: "1.5rem" },
+              fontWeight: "bold",
+              letterSpacing: 1,
+            }}
+          >
+            Chain Gigs
+          </Typography>
+        </Box>
+        {/* Navigation Links - stick to the left after logo */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
           {isMobile ? (
             <>
               <IconButton color="inherit" onClick={handleMenuOpen}>
                 <MenuIcon />
               </IconButton>
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
                 {menuLinks.map((link) => (
                   <MenuItem
                     key={link.to}
@@ -140,60 +175,76 @@ function Header({ account, token, onLogout }) {
             </Stack>
           )}
         </Box>
-      {/* Spacer to push account/profile to the right */}
-      <Box sx={{ flexGrow: 1 }} />
-      {/* Account/Profile and Logout/Login on the far right */}
-      {token && profile && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              display: "inline",
-              mr: 1,
-              fontSize: { xs: "0.8rem", sm: "1rem" },
-              bgcolor: "primary.light",
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 2,
-            }}
-          >
-            {shortenAddress(account)}
-          </Typography>
-          <IconButton
-            color="inherit"
-            onClick={() => navigate("/profile")}
-            sx={{ p: 0.5 }}
-          >
-            <Avatar
-              src={avatar_url}
-              sx={{ width: 28, height: 28, bgcolor: "secondary.main" }}
+        {/* Spacer to push account/profile to the right */}
+        <Box sx={{ flexGrow: 1 }} />
+        {/* Account/Profile and Logout/Login on the far right */}
+        {token && profile && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                mr: 1,
+                fontSize: { xs: "0.85rem", sm: "1rem" },
+                bgcolor: "rgba(255,255,255,0.12)",
+                color: "#fff",
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 2,
+                fontFamily: "monospace",
+                border: "1px solid #fff",
+                boxShadow: "0 1px 4px rgba(33,28,132,0.08)",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+                transition: "background 0.2s",
+                "&:hover": {
+                  bgcolor: "rgba(255,255,255,0.22)",
+                },
+              }}
+              title={account}
+              onClick={() => navigator.clipboard.writeText(account)}
             >
-              {!avatar_url
-                ? getInitials(displayName)
-                : null}
-            </Avatar>
-          </IconButton>
-          <IconButton
+              {shortenAddress(account)}
+            </Typography>
+            <IconButton
+              color="inherit"
+              onClick={() => navigate("/profile")}
+              sx={{ p: 0.5 }}
+            >
+              <Avatar
+                src={avatar_url}
+                sx={{ width: 28, height: 28, bgcolor: "secondary.main" }}
+              >
+                {!avatar_url ? getInitials(displayName) : null}
+              </Avatar>
+            </IconButton>
+            <IconButton
+              color="inherit"
+              onClick={handleLogout}
+              sx={{
+                fontSize: { xs: "0.8rem", sm: "1rem" },
+                ml: 1,
+              }}
+              title="logout?"
+            >
+              <ExitToAppIcon />
+            </IconButton>
+          </Box>
+        )}
+        {!token && (
+          <Button
             color="inherit"
-            onClick={handleLogout}
-            sx={{
-              fontSize: { xs: "0.8rem", sm: "1rem" },
-              ml: 1,
-            }}
-            title="logout?"
+            component={RouterLink}
+            to="/auth"
+            sx={{ ml: 2 }}
           >
-            <ExitToAppIcon />
-          </IconButton>
-        </Box>
-      )}
-      {!token && (
-        <Button color="inherit" component={RouterLink} to="/auth" sx={{ ml: 2 }}>
-          Login
-        </Button>
-      )}
-    </Toolbar>
-  </AppBar>
-);
+            Login
+          </Button>
+        )}
+      </Toolbar>
+    </AppBar>
+  );
 }
 
 export default Header;

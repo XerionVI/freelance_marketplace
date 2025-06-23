@@ -77,7 +77,12 @@ function HomePage({ onLogin, onRegister }) {
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Connect with skilled professionals and get work done securely.
             </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 4 }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              justifyContent="center"
+              sx={{ mt: 4 }}
+            >
               <Button
                 variant="contained"
                 size="large"
@@ -86,21 +91,91 @@ function HomePage({ onLogin, onRegister }) {
               >
                 Find Talent
               </Button>
-              <Button variant="outlined" size="large" color="primary">
+              <Button
+                variant="outlined"
+                size="large"
+                color="primary"
+                onClick={() => navigate("/listings")}
+              >
                 Find Work
               </Button>
             </Stack>
           </Box>
         </Container>
       </Box>
+      {/* How it Works */}
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Typography variant="h5" fontWeight="bold" gutterBottom align="center">
+          How it Works
+        </Typography>
+        <Grid container spacing={4} justifyContent="center">
+          <Grid>
+            <Card elevation={2}>
+              <CardContent sx={{ textAlign: "center" }}>
+                <Typography variant="h4" color="primary" fontWeight="bold">
+                  1
+                </Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Sign Up
+                </Typography>
+                <Typography color="text.secondary">
+                  Create your free account in seconds.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid>
+            <Card elevation={2}>
+              <CardContent sx={{ textAlign: "center" }}>
+                <Typography variant="h4" color="primary" fontWeight="bold">
+                  2
+                </Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Create Job or Apply
+                </Typography>
+                <Typography color="text.secondary">
+                  Post a job or apply as a freelancer.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid>
+            <Card elevation={2}>
+              <CardContent sx={{ textAlign: "center" }}>
+                <Typography variant="h4" color="primary" fontWeight="bold">
+                  3
+                </Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Get Paid Securely
+                </Typography>
+                <Typography color="text.secondary">
+                  Payments via blockchain smart contract.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Container>
       {/* Categories */}
-      <Container maxWidth="md" sx={{py: 4 }}>
+      <Container maxWidth="md" sx={{ py: 4 }}>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
           Categories
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap">
           {categories.map((cat) => (
-            <Chip key={cat} label={cat} color="primary" variant="outlined" sx={{ mb: 1 }} />
+            <Chip
+              key={cat}
+              label={cat}
+              variant="outlined"
+              sx={{
+                mb: 1,
+                color: "#fff",
+                borderColor: "#fff",
+                background: "rgba(255,255,255,0.08)",
+                fontWeight: "bold",
+                "& .MuiChip-label": { color: "#fff" },
+              }}
+            />
           ))}
         </Stack>
       </Container>
@@ -114,22 +189,51 @@ function HomePage({ onLogin, onRegister }) {
           {featuredFreelancers.map((f, idx) => (
             <Grid key={idx}>
               <Card elevation={3} sx={{ textAlign: "center", p: 2 }}>
-                <Avatar src={f.avatar} sx={{ width: 64, height: 64, mx: "auto", mb: 1 }} />
+                <Avatar
+                  src={f.avatar}
+                  sx={{ width: 64, height: 64, mx: "auto", mb: 1 }}
+                />
                 <Typography variant="subtitle1" fontWeight="bold">
                   {f.name}
                 </Typography>
-                <Stack direction="row" spacing={1} justifyContent="center" sx={{ flexWrap: "wrap", mt: 1 }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="center"
+                  sx={{ flexWrap: "wrap", mt: 1 }}
+                >
                   {f.skills.slice(0, 3).map((skill) => (
-                    <Chip key={skill} label={skill} size="small" color="secondary" />
+                    <Chip
+                      key={skill}
+                      label={skill}
+                      size="small"
+                      color="secondary"
+                    />
                   ))}
                 </Stack>
-                <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mt: 1 }}>
-                  <Rating value={f.rating} precision={0.1} readOnly size="small" />
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="center"
+                  alignItems="center"
+                  sx={{ mt: 1 }}
+                >
+                  <Rating
+                    value={f.rating}
+                    precision={0.1}
+                    readOnly
+                    size="small"
+                  />
                   <Typography variant="body2" color="text.secondary">
                     {f.rating} ({f.completedJobs} jobs)
                   </Typography>
                 </Stack>
-                <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="center"
+                  sx={{ mt: 2 }}
+                >
                   <Button variant="outlined" size="small">
                     View Profile
                   </Button>

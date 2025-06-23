@@ -98,7 +98,7 @@ export default function HistoryHome() {
             }}
             gutterBottom
           >
-            {tab === 0 ? "🔗 Blockchain Transaction History" : "📊 Visual Analytics Dashboard"}
+            {tab === 0 ? "🔗 Blockchain Transaction History" : "Visual Analytics Dashboard"}
           </Typography>
           <Typography align="center" color="text.secondary">
             {tab === 0
