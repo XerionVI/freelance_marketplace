@@ -192,31 +192,37 @@ function JobDetailsPage({ account, token }) {
   }, [jobId, account, token]);
 
   // Fetch on-chain job data when modal is opened
-  useEffect(() => {
-    const fetchOnChainJob = async () => {
-      if (!blockModalOpen || !jobDetails?.contractJobId || !account) return;
-      setOnChainLoading(true);
-      try {
-        const contract = await getFreelanceEscrowContract();
-        const job = await contract.jobs(jobDetails.contractJobId);
-        setOnChainJob({
-          jobId: jobDetails.contractJobId,
-          client: job.client,
-          freelancer: job.freelancer,
-          amount: ethers.formatEther(job.amount),
-          status: Number(job.status),
-          title: jobDetails.title,
-          description: jobDetails.description,
-          deadline: jobDetails.deadline,
-        });
-      } catch (err) {
-        setOnChainJob(null);
-      } finally {
-        setOnChainLoading(false);
-      }
-    };
-    fetchOnChainJob();
-  }, [blockModalOpen, jobDetails?.contractJobId, account]);
+ useEffect(() => {
+  const fetchOnChainJob = async () => {
+    if (
+      !blockModalOpen ||
+      jobDetails?.contractJobId === null ||
+      jobDetails?.contractJobId === undefined ||
+      !account
+    )
+      return;
+    setOnChainLoading(true);
+    try {
+      const contract = await getFreelanceEscrowContract();
+      const job = await contract.jobs(jobDetails.contractJobId);
+      setOnChainJob({
+        jobId: jobDetails.contractJobId,
+        client: job.client,
+        freelancer: job.freelancer,
+        amount: ethers.formatEther(job.amount),
+        status: Number(job.status),
+        title: jobDetails.title,
+        description: jobDetails.description,
+        deadline: jobDetails.deadline,
+      });
+    } catch (err) {
+      setOnChainJob(null);
+    } finally {
+      setOnChainLoading(false);
+    }
+  };
+  fetchOnChainJob();
+}, [blockModalOpen, jobDetails?.contractJobId, account]);
 
   const handleFileUpload = async (e) => {
     e.preventDefault();

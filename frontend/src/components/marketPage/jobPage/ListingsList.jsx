@@ -51,7 +51,7 @@ function ListingsList({
   return (
     <>
       <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Typography variant="h6" fontWeight={700}>
+        <Typography variant="h6" fontWeight={700} color="#ffffff">
           Job Listings
         </Typography>
         <Chip
