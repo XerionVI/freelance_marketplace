@@ -42,6 +42,7 @@ import UploadFileSection from "../../files/UploadFileSection.jsx";
 import categoryData from "../../shared/jsonData/category.js";
 import JobBlockDetails from "./JobBlockDetails";
 import JobActivityTimeLine from "./JobActivityTimeLine";
+import ReviewModal from "./ReviewModal";
 
 import DisputeForm from "../../disputes/DisputeForm"; // Add this import at the top
 
@@ -87,6 +88,7 @@ function JobDetailsPage({ account, token }) {
   const [message, setMessage] = useState("");
   const [newNote, setNewNote] = useState("");
   const [onChainJob, setOnChainJob] = useState(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [disputeModalOpen, setDisputeModalOpen] = useState(false);
 
   //function state variables
@@ -790,6 +792,16 @@ function JobDetailsPage({ account, token }) {
                     Raise Dispute
                   </Button>
                 )}
+                {jobDetails.status === "Approved" && !jobDetails.reviewed && (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => setReviewModalOpen(true)}
+                    sx={{ ml: 2 }}
+                  >
+                    Leave a Review
+                  </Button>
+                )}
               </>
             )}
           </Stack>
@@ -833,6 +845,15 @@ function JobDetailsPage({ account, token }) {
           jobBlockData={onChainJob}
           loading={onChainLoading}
           jobDetails={jobDetails} // pass for title/description/deadline fallback
+        />
+        {/* Review Modal */}
+        <ReviewModal
+          open={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          jobDetails={jobDetails}
+          account={account}
+          token={token}
+          onReviewed={() => setReviewed(true)}
         />
       </Card>
     </Box>

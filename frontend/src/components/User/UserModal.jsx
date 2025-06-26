@@ -67,6 +67,15 @@ const UserModal = ({
         sx={{ mb: 2 }}
       />
       <TextField
+        label="Hourly Rate (ETH)"
+        name="hourly_rate"
+        type="number"
+        value={form.hourly_rate ?? ""}
+        onChange={onChange}
+        fullWidth
+        sx={{ mb: 2 }}
+      />
+      <TextField
         select
         label="Experience Level"
         name="experience_level"

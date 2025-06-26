@@ -20,6 +20,7 @@ import WorkIcon from "@mui/icons-material/Work";
 import EmailIcon from "@mui/icons-material/Email";
 import LanguageIcon from "@mui/icons-material/Language";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import UserReviewsCard from "./UserReviewsCard";
 
 import axios from "axios";
 import UserModal from "./UserModal";
@@ -36,7 +37,7 @@ const experienceLevels = [
   { value: "expert", label: "Expert" },
 ];
 
-const UserProfile = ({ profile: propProfile, account}) => {
+const UserProfile = ({ profile: propProfile, account }) => {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -45,6 +46,7 @@ const UserProfile = ({ profile: propProfile, account}) => {
     bio: "",
     avatar_url: "",
     experience_level: "",
+    hourly_rate: "",
     portfolio_url: "",
     skills: [],
   });
@@ -61,10 +63,12 @@ const UserProfile = ({ profile: propProfile, account}) => {
     try {
       // Start or get conversation with this user
       const res = await axios.post(
-  `${config.API_BASE_URL}/api/conversations/start`,
-  { otherUserId: profile.id },
-  { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-);
+        `${config.API_BASE_URL}/api/conversations/start`,
+        { otherUserId: profile.id },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
       const conversationId = res.data.id;
       // Navigate to chat page
       navigate(`/chat/${conversationId}`);
@@ -81,16 +85,12 @@ const UserProfile = ({ profile: propProfile, account}) => {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      const res = await axios.post(
-        "/api/users/avatar",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const res = await axios.post("/api/users/avatar", formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
       // Update avatar in profile
       setProfile((prev) => ({
         ...prev,
@@ -123,7 +123,9 @@ const UserProfile = ({ profile: propProfile, account}) => {
         } else {
           // Own profile (token required)
           res = await axios.get("/api/users/profile", {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
           });
         }
         setProfile(res.data);
@@ -131,6 +133,7 @@ const UserProfile = ({ profile: propProfile, account}) => {
           display_name: res.data.display_name || "",
           bio: res.data.bio || "",
           avatar_url: res.data.avatar_url || "",
+          hourly_rate: res.data.hourly_rate || "",
           experience_level: res.data.experience_level || "",
           portfolio_url: res.data.portfolio_url || "",
           skills: res.data.skills?.map((s) => s.id) || [],
@@ -173,11 +176,9 @@ const UserProfile = ({ profile: propProfile, account}) => {
 
   const handleSave = async () => {
     try {
-      await axios.put(
-        "/api/users/profile",
-        form,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
+      await axios.put("/api/users/profile", form, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       setEditOpen(false);
       // Refetch profile after save
       const res = await axios.get("/api/users/profile", {
@@ -209,7 +210,9 @@ const UserProfile = ({ profile: propProfile, account}) => {
 
   return (
     <>
-      <Card sx={{ maxWidth: 800, mx: "auto", mt: 4, p: 3, background: "#f8fafc" }}>
+      <Card
+        sx={{ maxWidth: 800, mx: "auto", mt: 4, p: 3, background: "#f8fafc" }}
+      >
         {/* Banner & Avatar */}
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <Box
@@ -263,7 +266,12 @@ const UserProfile = ({ profile: propProfile, account}) => {
             <Typography variant="h5" fontWeight="bold">
               {profile.display_name}
             </Typography>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ mt: 0.5 }}
+            >
               <Rating
                 value={profile.rating || 0}
                 precision={0.1}
@@ -273,20 +281,23 @@ const UserProfile = ({ profile: propProfile, account}) => {
                 emptyIcon={<StarIcon fontSize="inherit" />}
               />
               <Typography variant="body2" color="text.secondary">
-                {profile.rating?.toFixed(1) || "0.0"} ({profile.review_count || 0} reviews)
+                {profile.rating?.toFixed(1) || "0.0"} (
+                {profile.review_count || 0} reviews)
               </Typography>
             </Stack>
             <Typography variant="subtitle1" sx={{ mt: 1 }}>
-              {profile.role || "Freelancer"} - {profile.profession || "Web3 Expert"}
+              {profile.role || "Freelancer"}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              <WorkIcon sx={{ fontSize: 18, mr: 0.5, verticalAlign: "middle" }} />
+              <WorkIcon
+                sx={{ fontSize: 18, mr: 0.5, verticalAlign: "middle" }}
+              />
               {profile.completed_jobs || 0} Completed Jobs
             </Typography>
             {/* Hourly Rate */}
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                <b>Hourly Rate:</b> {profile.hourly_rate} ETH
-              </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <b>Hourly Rate:</b> {profile.hourly_rate} ETH
+            </Typography>
           </Box>
           {/* Action Buttons */}
           <Stack spacing={1}>
@@ -295,14 +306,37 @@ const UserProfile = ({ profile: propProfile, account}) => {
               color="primary"
               startIcon={<EmailIcon />}
               onClick={handleMessage}
-              disabled={!localStorage.getItem("token") || !profile.id}
+              disabled={
+                !localStorage.getItem("token") ||
+                !account ||
+                !profile.wallet_address ||
+                account.toLowerCase() === profile.wallet_address.toLowerCase()
+              }
             >
               Message
             </Button>
-            <Button variant="outlined" color="success" onClick={() => setJobModalOpen(true)}>
+            <Button
+              variant="outlined"
+              color="success"
+              onClick={() => setJobModalOpen(true)}
+              disabled={
+                !account ||
+                !profile.wallet_address ||
+                account.toLowerCase() === profile.wallet_address.toLowerCase()
+              }
+            >
               Hire
             </Button>
-            <Button variant="outlined" color="secondary" onClick={handleEdit}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleEdit}
+              disabled={
+                !account ||
+                !profile.wallet_address ||
+                account.toLowerCase() !== profile.wallet_address.toLowerCase()
+              }
+            >
               Edit Profile
             </Button>
           </Stack>
@@ -328,7 +362,12 @@ const UserProfile = ({ profile: propProfile, account}) => {
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             {profile.skills && profile.skills.length > 0 ? (
               profile.skills.map((skill) => (
-                <Chip key={skill.id} label={skill.name} color="primary" variant="outlined" />
+                <Chip
+                  key={skill.id}
+                  label={skill.name}
+                  color="primary"
+                  variant="outlined"
+                />
               ))
             ) : (
               <Typography variant="body2" color="text.secondary">
@@ -344,7 +383,12 @@ const UserProfile = ({ profile: propProfile, account}) => {
             Portfolio
           </Typography>
           {profile.portfolio_url ? (
-            <Link href={profile.portfolio_url} target="_blank" rel="noopener" underline="hover">
+            <Link
+              href={profile.portfolio_url}
+              target="_blank"
+              rel="noopener"
+              underline="hover"
+            >
               <LanguageIcon sx={{ mr: 1, verticalAlign: "middle" }} />
               {profile.portfolio_url}
             </Link>
@@ -355,6 +399,7 @@ const UserProfile = ({ profile: propProfile, account}) => {
           )}
         </Box>
       </Card>
+      {profile && <UserReviewsCard userId={profile.id} />}
       {/* Avatar Modal and Edit Modal only if canEdit */}
       {canEdit && (
         <>

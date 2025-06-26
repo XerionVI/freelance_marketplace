@@ -87,6 +87,10 @@ app.use("/api/applications", applicationsRoutes);
 const categoriesRoutes = require("./routes/categories");
 app.use("/api/categories", categoriesRoutes);
 
+// Import and use reviews routes
+const reviewsRoutes = require("./routes/reviews");
+app.use("/api/reviews", reviewsRoutes);
+
 // Serve uploads/works as static files
 app.use("/uploads/works", express.static(path.join(__dirname, "uploads/works")));
 

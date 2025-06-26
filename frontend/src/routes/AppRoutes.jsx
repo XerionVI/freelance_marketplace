@@ -20,7 +20,7 @@ function AppRoutes({ account, token, handleAuthSuccess, handleLogin, handleRegis
       <Route path="/home" element={<HomePage onLogin={handleLogin} onRegister={handleRegister} />} />
       <Route path="/auth" element={<AuthForm onAuthSuccess={handleAuthSuccess} />} />
       <Route path="/job-details/:jobId" element={<JobDetailsPage account={account} token={token} />} />
-      <Route path="/profile" element={<UserProfile />} />
+      <Route path="/profile" element={<UserProfile account={account}/>} />
       <Route path="/freelancer-home" element={<FreelancerHome account={account} token={token} />} />
       <Route path="/users/:id/profile" element={<UserProfile account={account} />} />
       <Route path="/history" element={<HistoryHome account={account} token={token} />} />

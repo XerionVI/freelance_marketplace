@@ -369,7 +369,38 @@ exports.updateJobStatus = (req, res) => {
       return res.status(404).send("Job not found.");
     }
 
-    res.status(200).send({ message: "Job status updated successfully." });
+    // If status is Approved, increment completed_jobs for the freelancer
+    if (status === "Approved") {
+      // Get the freelancer's user_id for this job
+      db.query(
+        "SELECT freelancer FROM jobs WHERE job_id = ?",
+        [jobId],
+        (err2, rows) => {
+          if (err2) {
+            console.error("Error fetching freelancer for job:", err2);
+            return res.status(500).send("Error updating completed jobs.");
+          }
+          if (!rows.length) {
+            return res.status(404).send("Freelancer not found for this job.");
+          }
+          const freelancerWallet = rows[0].freelancer;
+          // Update completed_jobs in user_profiles
+          db.query(
+            "UPDATE user_profiles up JOIN users u ON up.user_id = u.id SET up.completed_jobs = IFNULL(up.completed_jobs,0) + 1 WHERE u.wallet_address = ?",
+            [freelancerWallet],
+            (err3) => {
+              if (err3) {
+                console.error("Error incrementing completed_jobs:", err3);
+                // Don't fail the whole request, just log
+              }
+              return res.status(200).send({ message: "Job status updated and freelancer's completed jobs incremented." });
+            }
+          );
+        }
+      );
+    } else {
+      res.status(200).send({ message: "Job status updated successfully." });
+    }
   });
 };
 

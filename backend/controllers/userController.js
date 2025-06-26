@@ -50,7 +50,6 @@ exports.uploadAvatar = (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.user?.id;
-    console.log("Fetching profile for user ID:", userId);
     if (!userId) return res.status(401).json({ msg: "Unauthorized" });
 
     // Get user and profile
@@ -71,37 +70,47 @@ exports.getProfile = async (req, res) => {
         if (!users.length) return res.status(404).json({ msg: "User not found" });
         const user = users[0];
 
-        // Get skills
+        // Get review count
         db.query(
-          `SELECT s.id, s.name FROM user_skills us
-           JOIN skills s ON us.skill_id = s.id
-           WHERE us.user_id = ?`,
+          "SELECT COUNT(*) AS review_count FROM reviews WHERE reviewee_id = ?",
           [userId],
-          (err2, skills) => {
-            if (err2) {
-              console.error(err2);
-              return res.status(500).json({ msg: "Server error" });
-            }
+          (err2, rows) => {
+            const review_count = rows && rows[0] ? rows[0].review_count : 0;
 
-            const profile = {
-              id: user.id,
-              username: user.username,
-              display_name: user.display_name || user.username,
-              wallet_address: user.wallet_address,
-              role: user.role,
-              email: user.email,
-              bio: user.bio,
-              avatar_url: user.profile_picture_url,
-              experience_level: user.experience_level,
-              portfolio_url: user.portfolio_url,
-              rating: user.rating ? parseFloat(user.rating) : 0,
-              completed_jobs: user.completed_jobs || 0,
-              is_verified: !!user.is_verified,
-              hourly_rate: user.hourly_rate,
-              skills: skills || [],
-            };
+            // Get skills
+            db.query(
+              `SELECT s.id, s.name FROM user_skills us
+               JOIN skills s ON us.skill_id = s.id
+               WHERE us.user_id = ?`,
+              [userId],
+              (err3, skills) => {
+                if (err3) {
+                  console.error(err3);
+                  return res.status(500).json({ msg: "Server error" });
+                }
 
-            res.json(profile);
+                const profile = {
+                  id: user.id,
+                  username: user.username,
+                  display_name: user.display_name || user.username,
+                  wallet_address: user.wallet_address,
+                  role: user.role,
+                  email: user.email,
+                  bio: user.bio,
+                  avatar_url: user.profile_picture_url,
+                  experience_level: user.experience_level,
+                  portfolio_url: user.portfolio_url,
+                  rating: user.rating ? parseFloat(user.rating) : 0,
+                  completed_jobs: user.completed_jobs || 0,
+                  is_verified: !!user.is_verified,
+                  hourly_rate: user.hourly_rate,
+                  skills: skills || [],
+                  review_count, // <-- add this
+                };
+
+                res.json(profile);
+              }
+            );
           }
         );
       }
@@ -128,31 +137,43 @@ exports.getPublicProfile = (req, res) => {
       if (err) return res.status(500).json({ msg: "Server error" });
       if (!users.length) return res.status(404).json({ msg: "User not found" });
       const user = users[0];
+
+      // Get review count
       db.query(
-        `SELECT s.id, s.name FROM user_skills us
-         JOIN skills s ON us.skill_id = s.id
-         WHERE us.user_id = ?`,
+        "SELECT COUNT(*) AS review_count FROM reviews WHERE reviewee_id = ?",
         [userId],
-        (err2, skills) => {
-          if (err2) return res.status(500).json({ msg: "Server error" });
-          const profile = {
-            id: user.id,
-            username: user.username,
-            display_name: user.display_name || user.username,
-            wallet_address: user.wallet_address,
-            role: user.role,
-            email: user.email,
-            bio: user.bio,
-            avatar_url: user.profile_picture_url,
-            experience_level: user.experience_level,
-            portfolio_url: user.portfolio_url,
-            rating: user.rating ? parseFloat(user.rating) : 0,
-            completed_jobs: user.completed_jobs || 0,
-            is_verified: !!user.is_verified,
-            hourly_rate: user.hourly_rate,
-            skills: skills || [],
-          };
-          res.json(profile);
+        (err2, rows) => {
+          const review_count = rows && rows[0] ? rows[0].review_count : 0;
+
+          // Get skills
+          db.query(
+            `SELECT s.id, s.name FROM user_skills us
+             JOIN skills s ON us.skill_id = s.id
+             WHERE us.user_id = ?`,
+            [userId],
+            (err3, skills) => {
+              if (err3) return res.status(500).json({ msg: "Server error" });
+              const profile = {
+                id: user.id,
+                username: user.username,
+                display_name: user.display_name || user.username,
+                wallet_address: user.wallet_address,
+                role: user.role,
+                email: user.email,
+                bio: user.bio,
+                avatar_url: user.profile_picture_url,
+                experience_level: user.experience_level,
+                portfolio_url: user.portfolio_url,
+                rating: user.rating ? parseFloat(user.rating) : 0,
+                completed_jobs: user.completed_jobs || 0,
+                is_verified: !!user.is_verified,
+                hourly_rate: user.hourly_rate,
+                skills: skills || [],
+                review_count, // <-- add this
+              };
+              res.json(profile);
+            }
+          );
         }
       );
     }
@@ -171,6 +192,7 @@ exports.updateProfile = async (req, res) => {
       avatar_url,
       experience_level,
       portfolio_url,
+      hourly_rate,
       skills = [],
     } = req.body;
 
@@ -186,8 +208,15 @@ exports.updateProfile = async (req, res) => {
 
         // Update user_profiles table
         db.query(
-          `UPDATE user_profiles SET bio = ?, profile_picture_url = ?, experience_level = ?, portfolio_url = ? WHERE user_id = ?`,
-          [bio, avatar_url, experience_level, portfolio_url, userId],
+          `UPDATE user_profiles SET bio = ?, profile_picture_url = ?, experience_level = ?, portfolio_url = ?, hourly_rate = ? WHERE user_id = ?`,
+          [
+            bio,
+            avatar_url,
+            experience_level,
+            portfolio_url,
+            hourly_rate,
+            userId,
+          ],
           (err2) => {
             if (err2) {
               console.error(err2);
@@ -195,29 +224,33 @@ exports.updateProfile = async (req, res) => {
             }
 
             // Update skills (remove all and re-insert)
-            db.query(`DELETE FROM user_skills WHERE user_id = ?`, [userId], (err3) => {
-              if (err3) {
-                console.error(err3);
-                return res.status(500).json({ msg: "Server error" });
-              }
-
-              if (!skills.length) {
-                return res.json({ msg: "Profile updated successfully" });
-              }
-
-              const values = skills.map((skillId) => [userId, skillId]);
-              db.query(
-                `INSERT INTO user_skills (user_id, skill_id) VALUES ?`,
-                [values],
-                (err4) => {
-                  if (err4) {
-                    console.error(err4);
-                    return res.status(500).json({ msg: "Server error" });
-                  }
-                  res.json({ msg: "Profile updated successfully" });
+            db.query(
+              `DELETE FROM user_skills WHERE user_id = ?`,
+              [userId],
+              (err3) => {
+                if (err3) {
+                  console.error(err3);
+                  return res.status(500).json({ msg: "Server error" });
                 }
-              );
-            });
+
+                if (!skills.length) {
+                  return res.json({ msg: "Profile updated successfully" });
+                }
+
+                const values = skills.map((skillId) => [userId, skillId]);
+                db.query(
+                  `INSERT INTO user_skills (user_id, skill_id) VALUES ?`,
+                  [values],
+                  (err4) => {
+                    if (err4) {
+                      console.error(err4);
+                      return res.status(500).json({ msg: "Server error" });
+                    }
+                    res.json({ msg: "Profile updated successfully" });
+                  }
+                );
+              }
+            );
           }
         );
       }
