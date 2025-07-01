@@ -21,6 +21,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import LanguageIcon from "@mui/icons-material/Language";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import UserReviewsCard from "./UserReviewsCard";
+import ChatBoxHome from "../chatBox/ChatBoxHome";
 
 import axios from "axios";
 import UserModal from "./UserModal";
@@ -28,8 +29,6 @@ import AvatarModal from "./AvatarModal";
 import HireModal from "./HireModal";
 
 import config from "../../config";
-
-import { useNavigate } from "react-router-dom";
 
 const experienceLevels = [
   { value: "beginner", label: "Beginner" },
@@ -56,27 +55,53 @@ const UserProfile = ({ profile: propProfile, account }) => {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarHover, setAvatarHover] = useState(false);
   const [jobModalOpen, setJobModalOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedConvId, setSelectedConvId] = useState(null);
 
-  const navigate = useNavigate();
-
-  const handleMessage = async () => {
+  const handleOpenChat = async () => {
+    const loggedInUserId = getUserIdFromToken();
+    // If self, just open chatbox in self mode (no conversation)
+    if (
+      !profile ||
+      !loggedInUserId ||
+      Number(profile.id) === Number(loggedInUserId)
+    ) {
+      setSelectedConvId(null); // Ensure no conversation is selected
+      setChatOpen(true);
+      return;
+    }
     try {
-      // Start or get conversation with this user
-      const res = await axios.post(
-        `${config.API_BASE_URL}/api/conversations/start`,
-        { otherUserId: profile.id },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+      // Fetch all conversations for the current user
+      const res = await axios.get(`${config.API_BASE_URL}/api/conversations`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      // Try to find a conversation with this profile user
+      const existing = res.data.find(
+        (conv) =>
+          conv.otherUserId === profile.id ||
+          conv.otherUserId === Number(profile.id)
       );
-      const conversationId = res.data.id;
-      // Navigate to chat page
-      navigate(`/chat/${conversationId}`);
+      if (existing) {
+        setSelectedConvId(existing.id);
+        setChatOpen(true);
+      } else {
+        // Start a new conversation
+        const startRes = await axios.post(
+          `${config.API_BASE_URL}/api/conversations/start`,
+          { otherUserId: profile.id },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setSelectedConvId(startRes.data.id);
+        setChatOpen(true);
+      }
     } catch (e) {
-      alert("Failed to start conversation.");
+      alert("Failed to open or start conversation.");
     }
   };
-
   // Handler for avatar upload
   const handleAvatarUpload = async (file) => {
     setAvatarLoading(true);
@@ -145,6 +170,19 @@ const UserProfile = ({ profile: propProfile, account }) => {
     fetchProfile();
   }, [id, propProfile]);
 
+  function getUserIdFromToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.user?.id || null;
+    } catch {
+      return null;
+    }
+  }
+
+  const loggedInUserId = getUserIdFromToken();
+  const isSelf = !!profile && Number(profile.id) === Number(loggedInUserId);
   // Only allow editing if not in preview mode
   const canEdit = !id;
 
@@ -305,15 +343,14 @@ const UserProfile = ({ profile: propProfile, account }) => {
               variant="contained"
               color="primary"
               startIcon={<EmailIcon />}
-              onClick={handleMessage}
+              onClick={handleOpenChat}
               disabled={
                 !localStorage.getItem("token") ||
                 !account ||
-                !profile.wallet_address ||
-                account.toLowerCase() === profile.wallet_address.toLowerCase()
+                !profile.wallet_address
               }
             >
-              Message
+              {isSelf ? "Open Chat" : "Message"}
             </Button>
             <Button
               variant="outlined"
@@ -431,6 +468,30 @@ const UserProfile = ({ profile: propProfile, account }) => {
         account={account}
         onJobCreated={() => setJobModalOpen(false)}
       />
+      {/* Chat Box */}
+      {chatOpen && (
+        <Modal open={chatOpen} onClose={() => setChatOpen(false)}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              minWidth: 400,
+              minHeight: 400,
+            }}
+          >
+            <ChatBoxHome
+              token={localStorage.getItem("token")}
+              account={account}
+              userId={loggedInUserId}
+              otherUserId={profile.id}
+              initialConversationId={selectedConvId}
+              isSelf={isSelf}
+            />
+          </Box>
+        </Modal>
+      )}
     </>
   );
 };

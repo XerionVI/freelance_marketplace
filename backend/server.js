@@ -10,7 +10,14 @@ const app = express();
 const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // your frontend URL
+    methods: ["GET", "POST"],
+    credentials: true,
+  }
+});
+
 
 // Middleware
 app.use(cors());
@@ -102,9 +109,10 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-
 // Start the server
 const PORT = 5000;
-app.listen(PORT, () => {
+
+// With this:
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

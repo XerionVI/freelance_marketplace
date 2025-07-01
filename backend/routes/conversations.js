@@ -1,13 +1,12 @@
 const express = require("express");
-const router = express.Router();
 const conversationsController = require("../controllers/conversationsController");
 const auth = require("../middleware/authMiddleware"); // Your JWT auth middleware
 
-router.use(auth);
+const router = express.Router();
 
-router.get("/", conversationsController.getConversations);
-router.get("/:id/messages", conversationsController.getMessages);
-router.post("/:id/messages", conversationsController.sendMessage);
-router.post("/start", conversationsController.startConversation);
+router.get("/", auth, conversationsController.getConversations);
+router.get("/:id/messages", auth, conversationsController.getMessages);
+router.post("/:id/messages", auth, conversationsController.sendMessage);
+router.post("/start", auth, conversationsController.startConversation);
 
 module.exports = router;
