@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
   cors: {
-    origin: ["http://freelancemarketplacefrontend-production.up.railway.app", "http://localhost:5173"] , // your frontend URL
+    origin: ["https://freelancemarketplacefrontend-production.up.railway.app", "http://localhost:5173"] , // your frontend URL
     methods: ["GET", "POST"],
     credentials: true,
   }
