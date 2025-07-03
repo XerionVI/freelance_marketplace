@@ -3,13 +3,19 @@ const db = require("../db"); // adjust to your DB connection module
 
 // GET /api/skills - get all skills
 exports.getAllSkills = (req, res) => {
-  db.query("SELECT id, name FROM skills ORDER BY name ASC", (err, results) => {
-    if (err) {
-      console.error("Error fetching skills:", err);
-      return res.status(500).json({ msg: "Server error" });
-    }
-    res.json(results);
-  });
+ try {
+    db.query("SELECT id, name FROM skills ORDER BY name ASC", (err, results) => {
+      if (err) {
+        console.error("Error fetching skills:", err);
+        // Send the full error for debugging (remove in production)
+        return res.status(500).json({ msg: "Server error", error: err });
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    console.error("Unexpected error in getAllSkills:", error);
+    res.status(500).json({ msg: "Unexpected server error", error: error.stack });
+  }
 };
 
 // POST /api/skills - add a new skill (optional, admin use)
