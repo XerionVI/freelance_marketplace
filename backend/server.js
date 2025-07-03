@@ -19,8 +19,16 @@ const io = new Server(server, {
 });
 
 
-// Middleware
-app.use(cors());
+const allowedOrigins = [
+  "https://freelancemarketplacefrontend-production.up.railway.app",
+  "http://localhost:5173"
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
