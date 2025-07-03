@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import axios from "axios";
+import config from "../../../config";
 
 // Remove static skills array
 const experienceLevels = ["Beginner", "Intermediate", "Expert"];
