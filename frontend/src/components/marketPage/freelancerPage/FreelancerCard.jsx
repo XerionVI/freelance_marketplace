@@ -71,14 +71,18 @@ const FreelancerCard = ({ freelancer }) => (
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <Rating
-            value={freelancer.rating || 0}
+            value={
+              typeof freelancer.rating === "number" ? freelancer.rating : 0
+            }
             precision={0.1}
             readOnly
             size="small"
           />
           <Typography variant="body2" color="text.secondary">
-            {freelancer.rating?.toFixed(1) || "0.0"} (
-            {freelancer.completed_jobs || 0} jobs)
+            {typeof freelancer.rating === "number"
+              ? freelancer.rating.toFixed(1)
+              : "0.0"}{" "}
+            ({freelancer.completed_jobs || 0} jobs)
           </Typography>
           {freelancer.is_verified && (
             <Chip label="Verified" color="success" size="small" />
