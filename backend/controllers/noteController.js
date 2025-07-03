@@ -1,5 +1,3 @@
-const mysql = require("mysql");
-
 // MySQL setup
 const db = require("../db");
 

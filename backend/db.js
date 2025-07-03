@@ -1,4 +1,4 @@
-const mysql = require("mysql");
+const mysql = require("mysql2");
 
 // MySQL setup using Railway's environment variables
 const db = mysql.createConnection({
