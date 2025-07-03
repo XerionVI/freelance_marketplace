@@ -26,7 +26,7 @@ const FreelancerFilterSidebar = ({ filters, setFilters }) => {
 
   useEffect(() => {
     // Fetch all skills from backend
-    axios.get("/api/skills").then((res) => {
+    axios.get(`${config.API_BASE_URL}/api/skills`).then((res) => {
       setAllSkills(res.data || []);
       // Pick 5 random skills for quick chips
       const shuffled = [...res.data].sort(() => 0.5 - Math.random());

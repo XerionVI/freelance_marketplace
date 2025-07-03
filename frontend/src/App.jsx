@@ -46,7 +46,7 @@ function App() {
   const fetchUsername = async () => {
     if (!token) return;
     try {
-      const response = await axios.get("http://localhost:5000/api/auth/me", {
+      const response = await axios.get(`${config.API_BASE_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsername(response.data.username);

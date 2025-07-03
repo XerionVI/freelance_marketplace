@@ -110,7 +110,7 @@ const UserProfile = ({ profile: propProfile, account }) => {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      const res = await axios.post("/api/users/avatar", formData, {
+      const res = await axios.post(`${config.API_BASE_URL}/api/users/avatar`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           "Content-Type": "multipart/form-data",
@@ -144,10 +144,10 @@ const UserProfile = ({ profile: propProfile, account }) => {
         let res;
         if (id) {
           // Public profile (no token)
-          res = await axios.get(`/api/users/${id}/profile`);
+          res = await axios.get(`${config.API_BASE_URL}/api/users/${id}/profile`);
         } else {
           // Own profile (token required)
-          res = await axios.get("/api/users/profile", {
+          res = await axios.get(`${config.API_BASE_URL}/api/users/profile`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
@@ -190,7 +190,7 @@ const UserProfile = ({ profile: propProfile, account }) => {
   const fetchSkills = async () => {
     setLoadingSkills(true);
     try {
-      const res = await axios.get("/api/skills");
+      const res = await axios.get(`${config.API_BASE_URL}/api/skills`);
       setAllSkills(res.data);
     } catch (e) {
       setAllSkills([]);
@@ -214,12 +214,12 @@ const UserProfile = ({ profile: propProfile, account }) => {
 
   const handleSave = async () => {
     try {
-      await axios.put("/api/users/profile", form, {
+      await axios.put(`${config.API_BASE_URL}/api/users/profile`, form, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setEditOpen(false);
       // Refetch profile after save
-      const res = await axios.get("/api/users/profile", {
+      const res = await axios.get(`${config.API_BASE_URL}/api/users/profile`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setProfile(res.data);
