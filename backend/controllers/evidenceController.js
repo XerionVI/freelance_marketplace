@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const db = require("../db");
 
-// Multer setup for /uploads/evidance
+// Multer setup for /uploads/evidences
 const multer = require("multer");
 const uploadDir = path.join(__dirname, "..", "uploads", "evidences");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });

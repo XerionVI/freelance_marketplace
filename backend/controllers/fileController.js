@@ -4,7 +4,11 @@ const fs = require("fs");
 
 // MySQL setup
 const db = require("../db"); // Adjust the path to your DB connection module
-
+// Ensure the upload directory exists
+const uploadDir = path.join(__dirname, "../uploads/works");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -23,7 +27,7 @@ exports.uploadMiddleware = upload.single("file");
 // Upload a file for a specific job
 exports.uploadJobFile = (req, res) => {
   const { jobId } = req.params;
-  const { uploadedBy } = req.body; // Either 'Client' or 'Freelancer'
+  const { uploadedBy } = req.body;
 
   if (!jobId || !uploadedBy) {
     return res.status(400).send("Job ID and uploadedBy are required.");
@@ -36,15 +40,14 @@ exports.uploadJobFile = (req, res) => {
   const fileName = req.file.filename;
   const filePath = req.file.path;
 
-  // Insert file metadata into the database
   const query = `
     INSERT INTO job_files (job_id, file_name, file_path, uploaded_by)
     VALUES (?, ?, ?, ?)
   `;
   db.query(query, [jobId, fileName, filePath, uploadedBy], (err, result) => {
     if (err) {
-      console.error("Error saving file metadata:", err);
-      return res.status(500).send("Error saving file metadata.");
+      console.error("Error saving file metadata:", err); // This will show the real error in your Railway logs
+      return res.status(500).json({ message: "Error saving file metadata.", error: err });
     }
 
     res.status(200).send({

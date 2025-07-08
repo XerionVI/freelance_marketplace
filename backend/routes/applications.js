@@ -5,6 +5,12 @@ const auth = require("../middleware/authMiddleware"); // Your JWT auth middlewar
 
 const multer = require("multer");
 const path = require("path");
+
+const fs = require("fs");
+const uploadDir = "uploads/applications";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/applications");

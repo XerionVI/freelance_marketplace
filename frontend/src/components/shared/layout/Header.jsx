@@ -219,18 +219,20 @@ function Header({ account, token, onLogout }) {
                 {!avatar_url ? getInitials(displayName) : null}
               </Avatar>
             </IconButton>
-            <IconButton
-              color="inherit"
-              onClick={handleLogout}
-              sx={{
-                fontSize: { xs: "0.8rem", sm: "1rem" },
-                ml: 1,
-              }}
-              title="logout?"
-            >
-              <ExitToAppIcon />
-            </IconButton>
           </Box>
+        )}
+        {token && (
+          <IconButton
+            color="inherit"
+            onClick={handleLogout}
+            sx={{
+              fontSize: { xs: "0.8rem", sm: "1rem" },
+              ml: 1,
+            }}
+            title="logout?"
+          >
+            <ExitToAppIcon />
+          </IconButton>
         )}
         {!token && (
           <Button

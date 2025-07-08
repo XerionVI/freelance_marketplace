@@ -108,123 +108,124 @@ function JobDetailsPage({ account, token }) {
 
   const normalizedAccount = account ? ethers.getAddress(account) : "";
   console.log("Normalized Account on job page:", normalizedAccount);
+
+  const fetchJobDetails = async () => {
+    try {
+      const response = await axios.get(
+        `${config.API_BASE_URL}/api/jobs/${jobId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Wallet-Address": account,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const {
+          client,
+          freelancer,
+          Jobtitle,
+          description,
+          category_id,
+          deadline,
+          delivery_format,
+          timezone,
+          amount,
+          status,
+          contractJobId,
+          job_id,
+          on_dispute,
+          created_at,
+        } = response.data;
+
+        const normalizedJobDetails = {
+          title: Jobtitle || "Untitled",
+          description: description || "Description not provided",
+          category_id: getCategoryName(category_id),
+          deadline: deadline
+            ? new Date(deadline).toLocaleDateString()
+            : "No deadline set",
+          delivery_format: delivery_format || "Not specified",
+          timezone: timezone || "Not specified",
+          created_at: created_at
+            ? new Date(created_at).toLocaleDateString()
+            : "Not specified",
+          client: client ? ethers.getAddress(client) : "",
+          freelancer: freelancer ? ethers.getAddress(freelancer) : "",
+          amount: amount || "-",
+          status: status || "-",
+          contractJobId: contractJobId,
+          job_id: job_id || "-",
+          on_dispute: on_dispute,
+        };
+        setJobDetails(normalizedJobDetails);
+      }
+    } catch (error) {
+      console.error("Error fetching job details:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchJobFiles = async () => {
+    try {
+      const response = await axios.get(
+        `${config.API_BASE_URL}/api/files/${jobId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Wallet-Address": account,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setJobFiles(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching job files:", error);
+    }
+  };
+
   // Fetch job details and files on mount/jobId change
   useEffect(() => {
-    const fetchJobDetails = async () => {
-      try {
-        const response = await axios.get(
-          `${config.API_BASE_URL}/api/jobs/${jobId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Wallet-Address": account,
-            },
-          }
-        );
-
-        if (response.status === 200) {
-          const {
-            client,
-            freelancer,
-            Jobtitle,
-            description,
-            category_id,
-            deadline,
-            delivery_format,
-            timezone,
-            amount,
-            status,
-            contractJobId,
-            job_id,
-            on_dispute,
-            created_at,
-          } = response.data;
-
-          const normalizedJobDetails = {
-            title: Jobtitle || "Untitled",
-            description: description || "Description not provided",
-            category_id: getCategoryName(category_id),
-            deadline: deadline
-              ? new Date(deadline).toLocaleDateString()
-              : "No deadline set",
-            delivery_format: delivery_format || "Not specified",
-            timezone: timezone || "Not specified",
-            created_at: created_at
-              ? new Date(created_at).toLocaleDateString()
-              : "Not specified",
-            client: client ? ethers.getAddress(client) : "",
-            freelancer: freelancer ? ethers.getAddress(freelancer) : "",
-            amount: amount || "-",
-            status: status || "-",
-            contractJobId: contractJobId,
-            job_id: job_id || "-",
-            on_dispute: on_dispute,
-          };
-          setJobDetails(normalizedJobDetails);
-        }
-      } catch (error) {
-        console.error("Error fetching job details:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchJobFiles = async () => {
-      try {
-        const response = await axios.get(
-          `${config.API_BASE_URL}/api/files/${jobId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Wallet-Address": account,
-            },
-          }
-        );
-
-        if (response.status === 200) {
-          setJobFiles(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching job files:", error);
-      }
-    };
-
     fetchJobDetails();
     fetchJobFiles();
   }, [jobId, account, token]);
 
   // Fetch on-chain job data when modal is opened
- useEffect(() => {
-  const fetchOnChainJob = async () => {
-    if (
-      !blockModalOpen ||
-      jobDetails?.contractJobId === null ||
-      jobDetails?.contractJobId === undefined ||
-      !account
-    )
-      return;
-    setOnChainLoading(true);
-    try {
-      const contract = await getFreelanceEscrowContract();
-      const job = await contract.jobs(jobDetails.contractJobId);
-      setOnChainJob({
-        jobId: jobDetails.contractJobId,
-        client: job.client,
-        freelancer: job.freelancer,
-        amount: ethers.formatEther(job.amount),
-        status: Number(job.status),
-        title: jobDetails.title,
-        description: jobDetails.description,
-        deadline: jobDetails.deadline,
-      });
-    } catch (err) {
-      setOnChainJob(null);
-    } finally {
-      setOnChainLoading(false);
-    }
-  };
-  fetchOnChainJob();
-}, [blockModalOpen, jobDetails?.contractJobId, account]);
+  useEffect(() => {
+    const fetchOnChainJob = async () => {
+      if (
+        !blockModalOpen ||
+        jobDetails?.contractJobId === null ||
+        jobDetails?.contractJobId === undefined ||
+        !account
+      )
+        return;
+      setOnChainLoading(true);
+      try {
+        const contract = await getFreelanceEscrowContract();
+        const job = await contract.jobs(jobDetails.contractJobId);
+        setOnChainJob({
+          jobId: jobDetails.contractJobId,
+          client: job.client,
+          freelancer: job.freelancer,
+          amount: ethers.formatEther(job.amount),
+          status: Number(job.status),
+          title: jobDetails.title,
+          description: jobDetails.description,
+          deadline: jobDetails.deadline,
+        });
+      } catch (err) {
+        setOnChainJob(null);
+      } finally {
+        setOnChainLoading(false);
+      }
+    };
+    fetchOnChainJob();
+  }, [blockModalOpen, jobDetails?.contractJobId, account]);
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
@@ -703,15 +704,6 @@ function JobDetailsPage({ account, token }) {
           spacing={2}
           sx={{ mt: 5 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<Edit />}
-            color="primary"
-            // onClick={handleEditJob}
-            disabled={!!jobDetails.on_dispute}
-          >
-            Edit Job (notfix)
-          </Button>
           <Stack direction="row" spacing={2}>
             {/* If job is on dispute, show warning and disable all status update buttons */}
             {!!jobDetails.on_dispute ? (
@@ -836,6 +828,7 @@ function JobDetailsPage({ account, token }) {
               severity: "success",
             });
             setDisputeModalOpen(false);
+            fetchJobDetails();
           }}
         />
         {/* Job Block Details Modal */}

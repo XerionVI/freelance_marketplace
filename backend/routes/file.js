@@ -14,7 +14,4 @@ router.get("/download/:fileId", fileController.downloadFile);
 // Route to fetch all files for a specific job
 router.get("/:jobId", fileController.getJobFiles);
 
-// Route to download a file by its ID
-router.get("/download/:fileId", fileController.downloadFile);
-
 module.exports = router;
