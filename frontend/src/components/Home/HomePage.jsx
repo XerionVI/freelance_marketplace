@@ -54,6 +54,23 @@ const featuredFreelancers = [
 
 function HomePage({ onLogin, onRegister }) {
   const navigate = useNavigate();
+  const isLoggedIn = !!token;
+
+   const handleFindTalent = () => {
+    if (isLoggedIn) {
+      navigate("/freelancer-home");
+    } else {
+      navigate("/auth");
+    }
+  };
+
+  const handleFindWork = () => {
+    if (isLoggedIn) {
+      navigate("/listings");
+    } else {
+      navigate("/auth");
+    }
+  };
   return (
     <Box>
       {/* Hero Section */}
@@ -87,7 +104,7 @@ function HomePage({ onLogin, onRegister }) {
                 variant="contained"
                 size="large"
                 color="primary"
-                onClick={() => navigate("/freelancer-home")}
+                onClick={handleFindTalent}
               >
                 Find Talent
               </Button>
@@ -95,7 +112,7 @@ function HomePage({ onLogin, onRegister }) {
                 variant="outlined"
                 size="large"
                 color="primary"
-                onClick={() => navigate("/listings")}
+                onClick={handleFindWork}
               >
                 Find Work
               </Button>

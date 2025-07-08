@@ -12,6 +12,7 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import Link from "@mui/material/Link";
+import config from "../../../config";
 import { getDisputeResolutionContract } from "../../../utils/getContractInstance";
 
 function DisputeEvidenceSection({
@@ -56,7 +57,7 @@ function DisputeEvidenceSection({
     formData.append("party_type", partyType);
 
     // 1. Upload evidence to backend
-    await fetch(`/api/evidence/upload`, {
+    await fetch(`${config.API_BASE_URL}/api/evidence/upload`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -71,7 +72,7 @@ function DisputeEvidenceSection({
     await tx.wait();
 
     // 3. Update backend dispute evidence status
-    await fetch(`/api/disputes/submit-evidence/${disputeId}`, {
+    await fetch(`${config.API_BASE_URL}/api/disputes/submit-evidence/${disputeId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -136,7 +137,7 @@ function DisputeEvidenceSection({
                 size="small"
                 startIcon={<DownloadIcon />}
                 component={Link}
-                href={`/api/evidence/download/${ev.id}`}
+                href={`${config.API_BASE_URL}/api/evidence/download/${ev.id}`}
                 target="_blank"
                 sx={{ ml: "auto" }}
               >
@@ -145,7 +146,7 @@ function DisputeEvidenceSection({
               {ev.file_type && ev.file_type.startsWith("image/") && (
                 <Box
                   component="img"
-                  src={`/api/evidence/download/${ev.id}`}
+                  src={`${config.API_BASE_URL}/api/evidence/download/${ev.id}`}
                   alt={ev.file_name}
                   sx={{
                     maxHeight: 40,
