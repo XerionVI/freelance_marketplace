@@ -16,8 +16,8 @@ import HistoryHome from "../components/history/HistoryHome";
 function AppRoutes({ account, token, handleAuthSuccess, handleLogin, handleRegister }) {
   return (
     <Routes>
-      <Route path="/" element={<HomePage onLogin={handleLogin} onSignUp={handleRegister} />} />
-      <Route path="/home" element={<HomePage onLogin={handleLogin} onRegister={handleRegister} />} />
+      <Route path="/" element={<HomePage onLogin={handleLogin} onSignUp={handleRegister} token/>} />
+      <Route path="/home" element={<HomePage onLogin={handleLogin} onRegister={handleRegister} token/>} />
       <Route path="/auth" element={<AuthForm onAuthSuccess={handleAuthSuccess} />} />
       <Route path="/job-details/:jobId" element={<JobDetailsPage account={account} token={token} />} />
       <Route path="/profile" element={<UserProfile account={account}/>} />

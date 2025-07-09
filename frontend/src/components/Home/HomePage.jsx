@@ -52,7 +52,7 @@ const featuredFreelancers = [
   },
 ];
 
-function HomePage({ onLogin, onRegister }) {
+function HomePage({ onLogin, onRegister, token }) {
   const navigate = useNavigate();
   const isLoggedIn = !!token;
 
