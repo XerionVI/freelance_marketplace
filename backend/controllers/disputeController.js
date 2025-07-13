@@ -1,5 +1,7 @@
+// Import necessary modules
 const db = require("../db");
 
+// Create a new dispute
 exports.createDispute = (req, res) => {
   const {
     id, // disputeId from contract
@@ -67,6 +69,7 @@ exports.getDisputeById = (req, res) => {
   });
 };
 
+// Get dispute details including evidence and arguments
 exports.getDisputeDetails = (req, res) => {
   const { id } = req.params;
 
@@ -99,6 +102,7 @@ exports.getDisputeDetails = (req, res) => {
   });
 };
 
+// Update dispute status
 exports.updateDisputeStatus = (req, res) => {
   const { id } = req.params;
   const { status, winner_address } = req.body;
@@ -134,6 +138,7 @@ exports.updateDisputeStatus = (req, res) => {
   });
 };
 
+// Submit evidence for a party
 exports.submitEvidence = (req, res) => {
   const { id } = req.params; // dispute id
   const { party_type } = req.body; // "client" or "freelancer"

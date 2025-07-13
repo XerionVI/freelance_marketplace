@@ -1,6 +1,8 @@
+// Import necessary modules
 const db = require("../db");
 const fs = require("fs");
 
+// Create Job Application
 exports.createJobApplication = (req, res) => {
   const { listing_id, freelancer_address, cover_letter, proposed_amount, user_id } = req.body;
   const attachmentPath = req.file ? req.file.path : null;
@@ -18,6 +20,7 @@ exports.createJobApplication = (req, res) => {
   );
 };
 
+// Download Job Application Attachment
 exports.downloadAttachment = (req, res) => {
   const { application_id } = req.params;
   db.query(
@@ -35,6 +38,7 @@ exports.downloadAttachment = (req, res) => {
     }
   );
 };
+// Update Job Application
 exports.updateJobApplication = (req, res) => {
   const { application_id } = req.params;
   const { cover_letter, proposed_amount } = req.body;
@@ -93,6 +97,7 @@ exports.getApplicationsByFreelancer = (req, res) => {
   );
 };
 
+// Delete Job Application
 exports.deleteJobApplication = (req, res) => {
   const { application_id } = req.params;
 
@@ -124,7 +129,7 @@ exports.deleteJobApplication = (req, res) => {
   );
 };
 
-
+// Update Job Application Status
 exports.updateApplicationStatus = (req, res) => {
   const { application_id } = req.params;
   const { application_status } = req.body;
@@ -140,9 +145,9 @@ exports.updateApplicationStatus = (req, res) => {
     }
   );
 };
-
 const path = require("path");
 
+// Preview Job Application Attachment
 exports.previewAttachment = (req, res) => {
   const { application_id } = req.params;
   db.query(

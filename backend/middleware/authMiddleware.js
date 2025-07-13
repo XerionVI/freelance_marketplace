@@ -1,5 +1,7 @@
+// Jwt Middleware for Authentication
 const jwt = require("jsonwebtoken");
 
+// Middleware to protect routes by verifying JWT tokens
 module.exports = function (req, res, next) {
   const authHeader = req.header("Authorization");
 

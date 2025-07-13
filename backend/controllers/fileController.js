@@ -1,9 +1,11 @@
-const multer = require("multer"); // Add this line
+// Import necessary modules
+const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
 // MySQL setup
 const db = require("../db"); // Adjust the path to your DB connection module
+
 // Ensure the upload directory exists
 const uploadDir = path.join(__dirname, "../uploads/works");
 if (!fs.existsSync(uploadDir)) {

@@ -1,12 +1,15 @@
+// Import necessary modules
 require("dotenv").config();
 
+// Import express, path, and cors for the server setup
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
 
-
+// Create an instance of express
 const app = express();
 
+// Create HTTP server and Socket.IO setup
 const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -18,21 +21,23 @@ const io = new Server(server, {
   }
 });
 
-
+// Set up CORS to allow requests from specific origins
 const allowedOrigins = [
   "https://freelancemarketplacefrontend-production.up.railway.app",
   "http://localhost:5173"
 ];
 
+// Use CORS middleware to allow requests from the specified origins
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
 
+// Parse JSON bodies for incoming requests
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-
+// Middleware to handle URL-encoded data
 io.on("connection", (socket) => {
   // Join user to their own room for private messages
   socket.on("join", (userId) => {
@@ -120,7 +125,7 @@ app.get("*", (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 5000;
 
-// With this:
+// Handle uncaught exceptions
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

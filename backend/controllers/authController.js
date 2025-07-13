@@ -1,8 +1,11 @@
+// import necessary modules
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
+
 const db = require("../db");
 
+// This controller handles user registration, login, and fetching user details
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

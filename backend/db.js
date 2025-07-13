@@ -1,3 +1,4 @@
+// Import necessary modules
 const mysql = require("mysql2");
 
 // MySQL setup using Railway's environment variables

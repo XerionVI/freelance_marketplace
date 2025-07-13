@@ -1,3 +1,4 @@
+// Import necessary modules
 const db = require("../db");
 
 // Add a new argument

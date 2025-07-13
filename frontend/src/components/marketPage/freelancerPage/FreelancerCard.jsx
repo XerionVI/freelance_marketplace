@@ -84,9 +84,6 @@ const FreelancerCard = ({ freelancer }) => (
               : "0.0"}{" "}
             ({freelancer.completed_jobs || 0} jobs)
           </Typography>
-          {freelancer.is_verified && (
-            <Chip label="Verified" color="success" size="small" />
-          )}
           <Chip
             label={freelancer.availability || "Available"}
             color="info"
@@ -102,9 +99,6 @@ const FreelancerCard = ({ freelancer }) => (
           to={`/users/${freelancer.id}/profile`}
         >
           View Profile
-        </Button>
-        <Button variant="outlined" size="small">
-          Message
         </Button>
       </Stack>
     </CardContent>

@@ -1,3 +1,4 @@
+// import necessary modules
 const db = require("../db");
 
 // Get all categories
