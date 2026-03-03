@@ -7,6 +7,8 @@
 
 **Chain Gigs** is a decentralized freelance marketplace that leverages the Ethereum blockchain to enable transparent, secure, and automated job contracts between clients and freelancers using cryptocurrency (ETH). It features on-chain job creation, escrow-based payments, dispute resolution via community voting, and file submission with optional IPFS support.
 
+Smart Contract Repo: https://github.com/XerionVI/SmartContract
+
 ---
 
 ## 🚀 Features
